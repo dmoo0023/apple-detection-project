@@ -62,3 +62,48 @@ depth falls in the `out_of_range` band (below the dataset's own stated
 than hiding. The 2D pixel/cm numbers and detection metrics (P/R/F1/mAP) are
 not affected by either limitation and are this baseline's most trustworthy
 numbers.
+
+## model-v1-first-fit — Stage 8 first YOLO fine-tune
+
+**Date:** 2026-10-24
+**What:** First learned-model fit, against the `baseline-colour-v1`
+classical baseline. `yolov8n.pt` (pretrained), fine-tuned 100 epochs,
+imgsz=640, batch=4, seed=42, on the **10** currently-labelled train images
+(572 GT apples in val). One change from the baseline: the detection method
+itself (learned vs. classical) — everything else (split, evaluation code,
+geometry module) held fixed, per rule 5.
+
+**Result (val, through `src/evaluate.py`):** precision 0.676, recall
+0.827, F1 **0.744**, mAP@0.5 **0.756** (TP=473, FP=227, FN=99) — a large
+jump over the classical baseline's F1 0.501 / mAP@0.5 0.103, on every
+metric.
+
+**Caveat, stated plainly:** this is trained on only 10 images. A result
+this strong from so little data is encouraging but should be treated
+cautiously, for two reasons neither of which this run can rule out on its
+own:
+1. **No learning curve yet** — Stage 8 calls for performance plotted
+   against the number of labelled training images; with one data point
+   there's no way to tell whether 10 images is already enough or whether
+   this number will move a lot as more labels are added (the student is
+   actively adding more and plans to retrain — the natural next step is
+   exactly this learning-curve comparison once there's a second point).
+2. **Possible domain similarity between train and val**, not data leakage.
+   The 70/15/15 split keeps individual trees strictly separated (Stage 3),
+   but train's 10 labelled images are all row 2, and val's 20 are all row
+   1 — two adjacent rows captured in the same session, so they likely
+   share lighting, tree variety and camera conditions closely. That's not
+   a split-correctness problem (different physical trees, properly held
+   out), but it does mean this first result may not predict performance on
+   a visually different row as well as a more row-diverse train/val split
+   eventually will once more rows get labelled.
+
+**Not yet done (deferred until more labels exist, per the student's own
+plan to retrain):** the full Stage 8 series (model size, pretrained vs.
+random init, LR/batch/epoch sweep, augmentation, boxes vs. segmentation),
+seed-repeated runs, and the learning-curve plot. This entry is the first
+point on that curve, not the finished stage.
+
+**Tag:** none yet — `model-v1` is reserved for Stage 8's full exit check
+(logged experiments, learning curve, seed spread, error analysis), not a
+single first fit.

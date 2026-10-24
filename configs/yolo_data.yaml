@@ -1,0 +1,5 @@
+path: C:\Users\melbo\dev\apple-detection-project\data\derived\yolo_dataset
+train: images/train
+val: images/val
+names:
+  0: apple

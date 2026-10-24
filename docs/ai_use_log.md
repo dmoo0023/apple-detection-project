@@ -181,3 +181,24 @@ student** to review/correct these in labelme and copy them into the real
 dataset folder before any further label-dependent work continues.
 
 **Student review notes:**
+
+## Stage 8 (first model only): YOLO fine-tune on 30 labels — 2026-10-24
+
+**Asked:** Student added 3 more corrected labels (30 total: 10 train / 20
+val / 0 test) and asked to proceed with training now, planning to add more
+and retrain later.
+
+**Produced:** `scripts/prepare_yolo_dataset.py`, `scripts/train_yolo.py`,
+`configs/yolo_data.yaml`, `runs/yolo/model-v1-first-fit/` (metrics/plots;
+weights git-ignored), `results/model-v1-first-fit_val_summary.md` +
+`..._val_matches.csv`, `docs/stage-8-notes.md`, an `EXPERIMENTS.md` entry.
+First YOLO fit (yolov8n, 100 epochs, 10 train images) scored F1=0.744,
+mAP@0.5=0.756 on val, well above the classical baseline (F1=0.501,
+mAP@0.5=0.103). Flagged clearly as a first data point, not a finished
+result: only 10 training images, and train/val being adjacent orchard rows
+means some of the apparent strength could be domain similarity rather than
+general apple-detection ability — both stated explicitly in
+`EXPERIMENTS.md` so it isn't mistaken for more than it is. 42/42 project
+tests pass (unchanged; no test code touched this round).
+
+**Student review notes:**
