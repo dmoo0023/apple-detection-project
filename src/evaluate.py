@@ -104,6 +104,10 @@ def match_all(gt: list[Apple2D], pred: list[Apple2D], match_frac: float = 0.5) -
 # --- 2. Detection metrics ----------------------------------------------------
 
 def precision_recall_f1(match_results: dict[str, ImageMatchResult]) -> dict:
+    """Standard detection metrics from match_all()'s output, pooled across every image:
+    precision = TP/(TP+FP), recall = TP/(TP+FN), F1 = harmonic mean of the two.
+    Returns {"tp", "fp", "fn", "precision", "recall", "f1"}.
+    """
     tp = sum(len(r.matched) for r in match_results.values())
     fp = sum(len(r.unmatched_pred) for r in match_results.values())
     fn = sum(len(r.unmatched_gt) for r in match_results.values())
@@ -345,6 +349,10 @@ def summarise(
 
 
 def summary_to_markdown(summary: dict, method_name: str, split_name: str) -> str:
+    """Render summarise()'s output as a markdown report: detection metrics, counting
+    accuracy, overall error, and the per-distance-band table -- with the 3D-proxy
+    caveat spelled out every time, so a results file is never shown without it.
+    """
     d = summary["detection"]
     o = summary["overall"]
     lines = [

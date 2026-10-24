@@ -39,5 +39,7 @@ def load_camera() -> dict:
 
 
 def camera_is_complete(camera_cfg: dict) -> bool:
+    """True only if every value geometry.py needs (fx, fy, cx, cy, depth scale) is set --
+    i.e. none of them are still the placeholder `null`s checkpoint C1 left for missing values."""
     required = ("fx", "fy", "cx", "cy", "depth_scale_to_metres")
     return all(camera_cfg.get(k) is not None for k in required)

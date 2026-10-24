@@ -236,6 +236,7 @@ def apples_to_labelme_dict(image_filename: str, apples: list[tuple[float, float,
 
 def write_labelme_json(json_path: Path, image_filename: str, apples: list[tuple[float, float, float]],
                         img_w: int, img_h: int) -> None:
+    """Write apples_to_labelme_dict()'s output straight to disk as the labelme JSON file."""
     data = apples_to_labelme_dict(image_filename, apples, img_w, img_h)
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)

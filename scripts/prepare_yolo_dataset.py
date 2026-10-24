@@ -27,6 +27,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def build_split(split: str, image_ids: list[str], rgb_dir: Path, labels_det_dir: Path, out_root: Path) -> int:
+    """Copy one split's currently-labelled images+labels into Ultralytics' expected
+    images/<split>/ + labels/<split>/ layout. Clears the folder first and rebuilds
+    from scratch every run, rather than only adding new files, so a label that gets
+    corrected or a tree that moves between splits can never leave a stale copy behind.
+    """
     img_out = out_root / "images" / split
     lbl_out = out_root / "labels" / split
     img_out.mkdir(parents=True, exist_ok=True)

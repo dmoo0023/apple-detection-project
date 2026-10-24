@@ -16,6 +16,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def parse_metrics_summary(s: str) -> dict:
+    """Pull P/R/F1/mAP back out of the human-readable `metrics_summary` string
+    record_run() wrote into runs/experiments.csv -- that file is deliberately a plain
+    sentence (so EXPERIMENTS.md-style narratives can quote it directly), not structured
+    data, so this is the one place that regex-parses it back for plotting."""
     out = {}
     for key, pattern in [("precision", r"P=([\d.]+)"), ("recall", r"R=([\d.]+)"),
                           ("f1", r"F1=([\d.]+)"), ("map50", r"mAP=([\d.]+)")]:
@@ -26,6 +30,8 @@ def parse_metrics_summary(s: str) -> dict:
 
 
 def parse_count_mae(run_id: str) -> float | None:
+    """Count MAE isn't in runs/experiments.csv's metrics_summary string, only in the
+    full markdown report -- read it from there instead of recomputing it."""
     summary_path = REPO_ROOT / "results" / f"{run_id}_val_summary.md"
     if not summary_path.exists():
         return None

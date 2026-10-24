@@ -15,11 +15,15 @@ FIELDS = ["timestamp", "run_id", "stage", "commit_hash", "dirty", "seed", "confi
 
 
 def git_commit_hash() -> str:
+    """The full SHA of the current HEAD commit -- recorded with every run so results can
+    always be traced back to the exact code that produced them."""
     result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     return result.stdout.strip()
 
 
 def git_is_dirty() -> bool:
+    """True if there are uncommitted changes in the working tree. A run logged while dirty
+    means its commit hash alone doesn't fully pin down what code actually ran."""
     result = subprocess.run(["git", "status", "--porcelain"], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
     return bool(result.stdout.strip())
 

@@ -66,6 +66,12 @@ def detections_to_apple2d(image_id: str, detections) -> list[Apple2D]:
 
 
 def grid_search(train_ids: list[str], gt_train: list[Apple2D]) -> tuple[ClassicalConfig, float, pd.DataFrame]:
+    """Exhaustive search over the 5 primary colour thresholds (32 combinations),
+    scored by F1 on TRAIN only (rule 3: never val/test), never on the multi-colour
+    shadow/highlight variants -- those are fixed, off-by-default toggles on
+    ClassicalConfig (see src/classical.py), not searched here, to keep this grid
+    small enough to run in seconds even as the train set grows.
+    """
     grid = {
         "hue_low_max": [8, 12],
         "hue_high_min": [165, 172],
