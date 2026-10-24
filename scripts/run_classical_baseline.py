@@ -109,6 +109,9 @@ def main() -> int:
     best_config, best_train_f1, grid_df = grid_search(train_ids, gt_train)
     grid_df.to_csv(results_dir / "stage6_grid_search.csv", index=False)
     print(f"Best config (train F1={best_train_f1:.3f}): {best_config.to_dict()}")
+    (results_dir / "baseline_colour_v1_config.json").write_text(
+        json.dumps(best_config.to_dict(), indent=2), encoding="utf-8"
+    )
 
     cam = load_camera()
     intr = Intrinsics.from_dict(cam)

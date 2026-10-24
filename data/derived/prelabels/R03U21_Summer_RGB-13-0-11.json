@@ -1,0 +1,442 @@
+{
+  "version": "5.0.0",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "Apple",
+      "points": [
+        [
+          384.71465759481896,
+          23.975130871383424
+        ],
+        [
+          388.159639713725,
+          23.975130871383424
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          193.9226111390871,
+          35.466400936926675
+        ],
+        [
+          202.20953646628456,
+          35.466400936926675
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          457.51758272829915,
+          33.86072876525916
+        ],
+        [
+          461.14615256431176,
+          33.86072876525916
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          121.92718774860789,
+          37.438046937154354
+        ],
+        [
+          124.82614426348641,
+          37.438046937154354
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          471.01971762406407,
+          40.22980904566136
+        ],
+        [
+          476.2842906724304,
+          40.22980904566136
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          267.5924376144934,
+          41.52873561336609
+        ],
+        [
+          273.01526602653547,
+          41.52873561336609
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          233.65432528965897,
+          45.07053459941201
+        ],
+        [
+          238.5031558471203,
+          45.07053459941201
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          500.3183632707016,
+          50.466706973050826
+        ],
+        [
+          506.53106152866445,
+          50.466706973050826
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          196.10732606738804,
+          68.47087928626185
+        ],
+        [
+          205.463175315444,
+          68.47087928626185
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          347.3445472776251,
+          69.9884438798524
+        ],
+        [
+          357.5856190349708,
+          69.9884438798524
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          452.2985170326291,
+          74.13714302020048
+        ],
+        [
+          461.6628405014546,
+          74.13714302020048
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          234.41842072753582,
+          81.47802430745983
+        ],
+        [
+          242.9085826791112,
+          81.47802430745983
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          416.5729763767689,
+          83.64642972927045
+        ],
+        [
+          426.771673758449,
+          83.64642972927045
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          266.1347153904493,
+          105.98225600733066
+        ],
+        [
+          275.80184805951205,
+          105.98225600733066
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          397.05667877027474,
+          132.5580300581506
+        ],
+        [
+          407.3413380208621,
+          132.5580300581506
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          532.5882951694895,
+          163.22029087018552
+        ],
+        [
+          537.3479647439731,
+          163.22029087018552
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          497.8749518467759,
+          164.54961177716567
+        ],
+        [
+          505.18440798577126,
+          164.54961177716567
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          183.7883582835891,
+          186.96742939842886
+        ],
+        [
+          189.144448882451,
+          186.96742939842886
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          161.96232866274997,
+          190.10873190381267
+        ],
+        [
+          172.5347827243537,
+          190.10873190381267
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          446.7072230306052,
+          225.27712204371088
+        ],
+        [
+          452.95519118284994,
+          225.27712204371088
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          174.6602118382803,
+          268.73545532626054
+        ],
+        [
+          183.6548383576877,
+          268.73545532626054
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          265.06953048920275,
+          275.42944211881115
+        ],
+        [
+          268.21551167349503,
+          275.42944211881115
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          85.94582755319797,
+          405.53186012083535
+        ],
+        [
+          90.00566353186201,
+          405.53186012083535
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          104.58407775692075,
+          445.25369657842424
+        ],
+        [
+          112.67521876998198,
+          445.25369657842424
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    }
+  ],
+  "imagePath": "R03U21_Summer_RGB-13-0-11.png",
+  "imageData": null,
+  "imageHeight": 480,
+  "imageWidth": 640
+}

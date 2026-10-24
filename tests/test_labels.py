@@ -16,6 +16,7 @@ from src.labels import (  # noqa: E402
     parse_yolo_detection_line,
     parse_yolo_segmentation_line,
     validate_labelme_file,
+    write_labelme_json,
     yolo_detection_line,
     yolo_segmentation_line,
 )
@@ -121,6 +122,26 @@ def test_extract_apples_no_warnings_on_clean_shape(tmp_path: Path) -> None:
     apples, warnings = extract_apples(p)
     assert len(apples) == 1
     assert warnings == []
+
+
+# --- Stage 7: writing pre-labels round-trips through the real labelme reader ---
+
+def test_write_labelme_json_round_trips_through_extract_apples(tmp_path: Path) -> None:
+    (tmp_path / "fake.png").write_bytes(b"\x89PNG\r\n\x1a\n")  # just needs to exist for the path check
+    detections = [(100.0, 80.0, 18.5), (300.0, 200.0, 12.0)]
+    json_path = tmp_path / "fake.json"
+    write_labelme_json(json_path, "fake.png", detections, img_w=640, img_h=480)
+
+    problems = validate_labelme_file(json_path, tmp_path)
+    assert not problems
+
+    apples, warnings = extract_apples(json_path)
+    assert warnings == []
+    assert len(apples) == 2
+    for a, (cx, cy, r) in zip(apples, detections):
+        assert a.cx == pytest.approx(cx, abs=1e-6)
+        assert a.cy == pytest.approx(cy, abs=1e-6)
+        assert a.radius == pytest.approx(r, abs=1e-6)
 
 
 # --- real dataset: every labelled image converts without exceptions --------
