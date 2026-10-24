@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Raw and derived imagery (kept out of git; see configs/paths.yaml)
+data/raw/
+data/derived/*.png
+data/derived/overlays/
+data/derived/**/*.png
+data/derived/**/*.jpg
+
+# Model weights
+*.pt
+*.pth
+
+# Large run/result artefacts (tables and small CSVs are kept, see below)
+runs/*/weights/
+runs/**/*.pt
+runs/**/*.pth
+results/**/*.ply
+
+# Keep small tracked result tables / manifests despite the patterns above
+!data/derived/manifest.csv
+!data/derived/apples_2d.csv
+!data/derived/checksums.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
