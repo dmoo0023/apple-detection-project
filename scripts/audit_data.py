@@ -280,20 +280,38 @@ def main() -> int:
     log(f"- total apple circles across all 25 labelled images: {total_shapes}")
 
     # --- 9. Depth sanity (raw units only - scale unverified) ----------------
-    log("\n## 9. Depth sanity (RAW pixel units — scale NOT verified, see finding above)")
-    center_medians = []
-    for p, arr in list(depth_info.items())[:50]:
+    log("\n## 9. Depth sanity")
+    center_medians_raw = []
+    for p, arr in depth_info.items():
         ch0 = arr[..., 0] if arr.ndim == 3 else arr
         h, w = ch0.shape
         patch = ch0[h // 2 - 20 : h // 2 + 20, w // 2 - 20 : w // 2 + 20]
         valid = patch[patch > 0]
         if valid.size:
-            center_medians.append(float(np.median(valid)))
-    if center_medians:
-        log(f"- median centre-patch raw value over {len(center_medians)} sampled images: "
-            f"{np.median(center_medians):.1f} (range {min(center_medians):.0f}-{max(center_medians):.0f}, raw 0-255 units)")
-    log("- cannot check against the 0.4-1.2 m capture-distance target because no depth scale "
-        "is available to convert raw pixel values to metres.")
+            center_medians_raw.append(float(np.median(valid)))
+    camera_cfg_for_sanity = load_camera()
+    scale = camera_cfg_for_sanity.get("depth_scale_to_metres")
+    if center_medians_raw:
+        log(f"- median centre-patch raw value over {len(center_medians_raw)} images: "
+            f"{np.median(center_medians_raw):.1f} (range {min(center_medians_raw):.0f}-"
+            f"{max(center_medians_raw):.0f}, raw 0-255 units)")
+    if scale is not None and center_medians_raw:
+        center_medians_m = [v * scale for v in center_medians_raw]
+        median_m = float(np.median(center_medians_m))
+        in_range = sum(1 for v in center_medians_m if 0.4 <= v <= 1.2)
+        log(f"- converted at depth_scale_to_metres={scale}: median centre depth "
+            f"{median_m:.3f} m (range {min(center_medians_m):.3f}-{max(center_medians_m):.3f} m)")
+        log(f"- images with centre depth inside the stated 0.4-1.2 m capture range: "
+            f"{in_range} / {len(center_medians_m)}")
+        if median_m < 0.4 or median_m > 1.2:
+            log(
+                "- **CHECK FAILS as expected: converted depth is far outside the stated "
+                "0.4-1.2 m capture range. This is the documented depth-scale limitation "
+                "accepted by the student at checkpoint C1 (2026-10-24), not a new problem — "
+                "see configs/camera.yaml and docs/stage-1-notes.md. Not silently passed.**"
+            )
+    else:
+        log("- cannot check against the 0.4-1.2 m capture-distance target: no depth scale configured.")
 
     # --- 10. Alignment overlays ----------------------------------------------
     log("\n## 10. Depth/RGB alignment overlays")
@@ -387,17 +405,24 @@ def main() -> int:
     log(f"- wrote sha256 checksums for {len(checksum_lines)} raw files to "
         f"`{paths['checksums_txt'].relative_to(Path.cwd())}`")
 
-    (paths["derived_dir"] / "path_report.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
-
     # --- exit status ------------------------------------------------------
     exit_ok = (
         total_trees == 544
         and not rgb_only and not depth_only
         and not placeholders
         and not json_problems
+        and complete
     )
-    log(f"\n## Exit check: {'PASS (structurally)' if exit_ok else 'ISSUES FOUND'} — "
-        f"but camera intrinsics/depth scale are INCOMPLETE, so checkpoint C1 still applies.")
+    log(f"\n## Exit check: {'PASS' if exit_ok else 'ISSUES FOUND'}")
+    log(f"- 544 trees, clean pairing, no placeholders, all labels valid: "
+        f"{'yes' if (total_trees == 544 and not rgb_only and not depth_only and not placeholders and not json_problems) else 'no'}")
+    log(f"- camera.yaml complete: {complete}")
+    if complete:
+        log("- NOTE: fx/fy/cx/cy and depth_scale_to_metres are documented APPROXIMATIONS "
+            "accepted by the student at checkpoint C1 (2026-10-24), not measured values — "
+            "see configs/camera.yaml and docs/stage-1-notes.md for the limitation this implies.")
+
+    (paths["derived_dir"] / "path_report.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
     return 0
 
 

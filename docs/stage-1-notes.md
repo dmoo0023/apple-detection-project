@@ -130,10 +130,51 @@ isn't known), and `has_labelme_json`.
   not actually downloaded to disk yet ("Files On-Demand"); reading it
   triggers a download, or fails if offline.
 
+## Checkpoint C1 outcome (2026-10-24)
+
+The student confirmed the 10 overlays look correctly aligned, then made two
+explicit decisions on the two open questions, after being shown the concrete
+numeric consequences of each (not guessed by the agent):
+
+1. **Depth scale.** Neither the camera nor the original capture setup is
+   available, so the true depth source behind the 8-bit PNGs cannot be
+   recovered. Decision: treat the raw 8-bit pixel value directly as
+   millimetres (`depth_scale_to_metres = 0.001`), the closest available
+   convention, and accept the dataset limitation rather than block the
+   project on data that no longer exists. Re-running the audit with this
+   scale converts the sampled centre-patch depths to a median of **0.144 m**
+   (range 0.116–0.173 m) — **0 of 542** images land inside the stated
+   0.4–1.2 m capture range. This is expected and is reported as a known,
+   accepted limitation, not silently hidden: see `scripts/audit_data.py`
+   section 9, which runs this exact check and prints the failure plainly
+   each time the audit runs.
+2. **Camera intrinsics.** Same situation — no camera, no capture scripts, no
+   calibration record. A websearch for an authoritative per-unit value
+   turned up only informal forum readouts that couldn't be independently
+   verified (the hosting sites block automated fetching), so those were not
+   used. Decision: derive fx/fy from Intel's **officially published** D435i
+   colour-stream field of view (69.4° × 42.5°, confirmed via Intel's own
+   support article citing datasheet page 35) using the pinhole formula,
+   with cx/cy assumed at the image centre. Intel's own spec states a ±3°
+   manufacturing tolerance on this FOV figure, which propagates to roughly
+   a ±5–8% error band on fx/fy for this specific, uncalibrated unit.
+
+Both values are written into `configs/camera.yaml` with long comments
+explaining exactly what they are and are not, so nobody mistakes them for
+measured calibration later. **Practical effect on the whole project:**
+absolute 3D position accuracy (the 2–3 cm target) cannot be rigorously
+verified against physical reality with this camera/depth configuration —
+this must be stated plainly in the final report (rule 9), alongside the
+existing proxy-accuracy limitation already built into Stage 5's evaluation
+design (no physical ground truth exists either way). What the pipeline
+*can* still validly do: detect apples in 2D, produce a consistent (if
+offset) 3D geometry pipeline, and compare methods against each other
+fairly, since every method is run through the same geometry and evaluation
+code with the same approximate camera model.
+
 ## Result
 
 Structurally, the dataset is in excellent shape: 544/544 trees, perfect
-pairing, clean filenames, no renames needed, all 25 labels valid. But the
-pipeline cannot proceed to Stage 2 onward in a way that would hit the 2–3 cm
-3D accuracy target without resolving the two questions below — this is
-checkpoint **C1**.
+pairing, clean filenames, no renames needed, all 25 labels valid, and
+`configs/camera.yaml` is now complete (with the approximations above
+clearly documented). Stage 1's exit check passes. Proceeding to Stage 2.

@@ -29,3 +29,23 @@ intrinsics and depth scale could **not** be verified from the data — see
 checkpoint C1 below.
 
 **Student review notes:**
+
+## Checkpoint C1 resolution — 2026-10-24
+
+**Asked:** Student reviewed the overlays (confirmed alignment correct) and
+decided, after being shown the concrete numeric consequences, how to handle
+the missing depth scale and camera intrinsics (no camera/capture setup
+available to measure either).
+
+**Produced:** Updated `configs/camera.yaml` with documented approximations
+(depth scale = RealSense mm convention applied directly to the 8-bit
+values; intrinsics derived from Intel's published D435i FOV spec, cx/cy at
+image centre), both flagged with long comments and a stated error range.
+Updated `scripts/audit_data.py` to run the 0.4-1.2 m depth sanity check
+honestly against the confirmed scale (it fails, as expected, and the
+failure is printed rather than hidden). Updated `docs/stage-1-notes.md`
+with the full reasoning and the practical implication: absolute 3D
+accuracy cannot be rigorously verified with this setup. Stage 1 exit check
+now passes; tagging `stage-1-done` and merging to `main`.
+
+**Student review notes:**

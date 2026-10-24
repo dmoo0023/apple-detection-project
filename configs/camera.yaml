@@ -2,28 +2,47 @@
 # stream at 640x480 (depth is pre-aligned to colour, per the project brief,
 # so the colour intrinsics apply to both images).
 #
-# STATUS: INCOMPLETE. See docs/stage-1-notes.md and checkpoint C1 — these
-# values were not found anywhere in the dataset or project folder and must
-# not be guessed (rule 2). Do not use this file until it is filled in.
+# STATUS: APPROXIMATE, NOT MEASURED. Neither the camera unit nor the
+# original capture setup is available (confirmed with the student at
+# checkpoint C1, 2026-10-24). Real per-unit calibration is unrecoverable.
+# Both values below are documented approximations, explicitly accepted by
+# the student as a known project limitation — see docs/stage-1-notes.md.
+# Do not treat any number in this file as a measured, trustworthy value.
 
 image_width: 640
 image_height: 480
 
-# Focal lengths and principal point, in pixels. NOT FOUND. These are specific
-# to this exact camera unit and the resolution/FOV mode it was streaming in;
-# the D435i factory defaults vary per unit and per firmware, so a generic
-# "typical D435i" number would not be trustworthy for a 2-3 cm accuracy
-# target.
-fx: null
-fy: null
-cx: null
-cy: null
+# Focal lengths and principal point, in pixels.
+#
+# Derived from Intel's OFFICIAL published field-of-view spec for the
+# D435/D435i colour sensor: 69.4 deg (horizontal) x 42.5 deg (vertical),
+# datasheet page 35, confirmed via Intel's own support article
+# (https://intel.com/content/www/us/en/support/articles/000030385.html).
+# Converted to pixel focal lengths with the pinhole formula
+# fx = (W/2) / tan(HFOV/2), fy = (H/2) / tan(VFOV/2); cx/cy assumed at the
+# image centre (no distortion/offset data available).
+#
+# Intel's OWN spec states a +/-3 degree manufacturing tolerance on this
+# FOV figure, which — propagated through the formula above — is roughly
+# a +/-5 to +/-8% error band on fx/fy for THIS specific camera unit. This
+# is on top of the depth-scale uncertainty below; absolute 3D accuracy
+# (the 2-3 cm target) cannot be rigorously verified against either value.
+fx: 462.14
+fy: 617.16
+cx: 320.0
+cy: 240.0
 
 # Depth scale: multiply a raw depth pixel value by this to get metres.
-# NOT FOUND, and more seriously: the depth PNGs on disk are 8-bit
-# (0-255), 3-channel images with per-image max values around 155-180, not
-# the 16-bit single-channel PNGs the brief expected. An 8-bit image of this
-# kind is almost always a *normalised visualisation* of depth (min/max
-# stretched per image for display), not metric depth — see stage-1 notes.
-# Do not set a scale here until the real depth source is confirmed.
-depth_scale_to_metres: null
+#
+# 0.001 = the RealSense convention of 1 raw unit = 1 mm, applied directly
+# to the raw 8-bit pixel values in D/*.png. This is NOT the camera's
+# verified native scale: those PNGs are 8-bit, 3-channel images (values
+# ~0-180), not the 16-bit single-channel depth stream the convention was
+# designed for, and no original 16-bit capture is available to recover the
+# true values from. Applying this scale gives median depths around 0.15 m,
+# well under the dataset's own stated 0.4-1.2 m capture range — a known,
+# accepted inconsistency (student decision, checkpoint C1, 2026-10-24),
+# not a bug to silently "fix". See docs/stage-1-notes.md for the numbers
+# and docs/stage-N-notes.md / the final report for how this limits what
+# the project's 3D results can claim.
+depth_scale_to_metres: 0.001

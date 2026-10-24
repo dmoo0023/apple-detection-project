@@ -48,9 +48,11 @@
 - files with problems: 0
 - total apple circles across all 25 labelled images: 781
 
-## 9. Depth sanity (RAW pixel units — scale NOT verified, see finding above)
-- median centre-patch raw value over 50 sampled images: 147.5 (range 131-173, raw 0-255 units)
-- cannot check against the 0.4-1.2 m capture-distance target because no depth scale is available to convert raw pixel values to metres.
+## 9. Depth sanity
+- median centre-patch raw value over 542 images: 144.0 (range 116-173, raw 0-255 units)
+- converted at depth_scale_to_metres=0.001: median centre depth 0.144 m (range 0.116-0.173 m)
+- images with centre depth inside the stated 0.4-1.2 m capture range: 0 / 542
+- **CHECK FAILS as expected: converted depth is far outside the stated 0.4-1.2 m capture range. This is the documented depth-scale limitation accepted by the student at checkpoint C1 (2026-10-24), not a new problem — see configs/camera.yaml and docs/stage-1-notes.md. Not silently passed.**
 
 ## 10. Depth/RGB alignment overlays
 - saved 10 overlays to `data\derived\overlays` for trees: [(20, 26), (21, 24), (3, 2), (15, 7), (23, 27), (23, 1), (21, 8), (17, 13), (22, 36), (19, 28)]
@@ -59,10 +61,14 @@
 - no renames necessary: all 544+544 files match one consistent pattern, zero-padded row/unit numbers, no case collisions.
 
 ## 12. Camera config
-- configs/camera.yaml complete (fx, fy, cx, cy, depth_scale_to_metres all set): False
-- **STOP: intrinsics and/or depth scale are missing. Do not guess (rule 2). Ask the student. See checkpoint C1.**
+- configs/camera.yaml complete (fx, fy, cx, cy, depth_scale_to_metres all set): True
 
 ## Manifest
 - wrote 544 rows to `data\derived\manifest.csv`
 - NOTE: depth_median_raw/min_raw/max_raw are RAW 0-255 pixel values, NOT metres (see finding in section 7/9 above).
 - wrote sha256 checksums for 1088 raw files to `data\derived\checksums.txt`
+
+## Exit check: PASS
+- 544 trees, clean pairing, no placeholders, all labels valid: yes
+- camera.yaml complete: True
+- NOTE: fx/fy/cx/cy and depth_scale_to_metres are documented APPROXIMATIONS accepted by the student at checkpoint C1 (2026-10-24), not measured values — see configs/camera.yaml and docs/stage-1-notes.md for the limitation this implies.
