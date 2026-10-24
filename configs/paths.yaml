@@ -1,0 +1,17 @@
+# All paths used by the pipeline. Code must read paths from here — never
+# hard-code a path in src/ or scripts/ (rule 8 in agent_workflow.md).
+#
+# raw_data_root is read-only: no script may ever write into it (rule 1).
+
+raw_data_root: "C:\\Users\\melbo\\OneDrive - Monash University\\Documents\\01_Monash\\MMA3001\\Apple Detection Project\\Dataset (Summer Only)"
+
+# Sub-folders of raw_data_root, confirmed by scripts/audit_data.py.
+rgb_subdir: "RGB"     # 544 RGB .png files + 25 labelme .json files, co-located
+depth_subdir: "D"     # 544 depth .png files (filename uses "D", not "Depth")
+
+# Everything below is derived output, written outside raw_data_root.
+derived_dir: "data/derived"
+manifest_csv: "data/derived/manifest.csv"
+path_report_md: "data/derived/path_report.md"
+overlays_dir: "data/derived/overlays"
+checksums_txt: "data/derived/checksums.txt"

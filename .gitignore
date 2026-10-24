@@ -3,11 +3,13 @@ __pycache__/
 *.pyc
 .venv/
 
-# Raw and derived imagery (kept out of git; see configs/paths.yaml)
+# Raw data is never copied into the repo; see configs/paths.yaml.
 data/raw/
+
+# Bulk derived imagery is excluded, but data/derived/overlays/ (a handful of
+# small sample overlays per stage, used to explain the pipeline) is kept -
+# see the allow rule for it near the bottom of this file.
 data/derived/*.png
-data/derived/overlays/
-data/derived/**/*.png
 data/derived/**/*.jpg
 
 # Model weights
@@ -20,10 +22,12 @@ runs/**/*.pt
 runs/**/*.pth
 results/**/*.ply
 
-# Keep small tracked result tables / manifests despite the patterns above
+# Keep small tracked result tables / manifests / sample overlays despite the patterns above
 !data/derived/manifest.csv
 !data/derived/apples_2d.csv
 !data/derived/checksums.txt
+!data/derived/overlays/
+!data/derived/overlays/*.png
 
 # OS / editor
 .DS_Store
