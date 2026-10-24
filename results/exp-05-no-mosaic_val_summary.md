@@ -1,0 +1,11 @@
+### YOLO yolov8n.pt (exp-05-no-mosaic) on val
+
+**3D error is a proxy** (no physical ground truth): the distance between the 3D SURFACE POINT (not a corrected centre -- see src/geometry.py's scope note) computed from the predicted circle and from the labelled circle, through the same geometry module -- not distance to a physically measured apple, and these positions also carry a known ~3-4.5cm systematic bias toward the camera versus the true apple centre.
+
+- Detection: precision=0.841, recall=0.797, F1=0.818, mAP@0.5=0.800 (TP=604, FP=114, FN=154)
+- **Apple count per image** (how close is the TOTAL count, not individual matches -- 26 images): MAE=2.62 apples/image, RMSE=3.59, bias=-1.54 (under-counting on average), correlation=0.977
+- Overall (604 matched apples): median 2D error = 1.76px (0.05cm); median 3D proxy error = 0.07cm; within 2cm = 100.0%; within 3cm = 100.0%
+
+| Distance band | n | median 2D err (cm) | median 3D proxy err (cm) | within 2cm | within 3cm |
+|---|---|---|---|---|---|
+| out_of_range | 604 | 0.05 | 0.07 | 100.0% | 100.0% |
