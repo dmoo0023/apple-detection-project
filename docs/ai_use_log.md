@@ -65,3 +65,19 @@ passing), `docs/stage-2-notes.md`. All 25 images converted with zero
 warnings (781 apples).
 
 **Student review notes:**
+
+## Stage 3: Splits — 2026-10-24
+
+**Asked:** Assign all 544 trees to train/val/test (~70/15/15), keeping
+whole orchard rows together to avoid background leakage, with a fixed
+seed, refusing to silently overwrite an existing split, and recommending
+which images to label next so the test set reaches 50-80 labelled images.
+
+**Produced:** `scripts/make_splits.py`, `configs/splits.json` (frozen,
+seed=42), `data/derived/stage3_report.md`, `tests/test_splits.py` (4 new
+tests, all passing), `docs/stage-3-notes.md`. Result: 383/84/77 trees
+(train/val/test), with the 25 currently labelled images split 5/20/0 by
+chance of the row shuffle. Test split has 0 labelled images right now;
+50 specific tree IDs recommended to label next.
+
+**Student review notes:**
