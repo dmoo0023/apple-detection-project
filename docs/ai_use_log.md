@@ -246,3 +246,25 @@ segmentation labels and Stage 8 item 3 already plans a boxes-vs-
 segmentation comparison. 45/45 project tests pass (unchanged).
 
 **Student review notes:**
+
+## Stage 8: third YOLO fit, test labels arrive — 2026-10-24
+
+**Asked:** Student added 21 more labels (61 total: 31 train / 20 val / 10
+test — first test labels). "For your perusal."
+
+**Produced:** Validated all 21, refreshed manifest/conversion artifacts.
+Confirmed test images are structurally excluded from the YOLO dataset
+build (not just a promise — `prepare_yolo_dataset.py` only ever touches
+train/val), consistent with rule 3. Retrained (`model-v1-31train`, 31
+train images): mAP@0.5 improved to 0.814 (best yet), but count accuracy
+got *worse* (MAE 4.20→6.00), reported plainly as a non-monotonic result
+rather than smoothed over — flagged as evidence that seed repeats
+(Stage 8 item 4) are now a higher priority than previously stated.
+Re-checked the recurring training-loss spike: now 3/3 runs, getting
+worse and earlier each time (not better, contradicting the "small
+dataset noise, will settle" framing). Computed the LR-warmup-schedule
+hypothesis numerically against each run's actual results.csv and ruled
+it out with real numbers rather than leaving it as an unchecked guess.
+Root cause still open. 45/45 tests pass (unchanged).
+
+**Student review notes:**

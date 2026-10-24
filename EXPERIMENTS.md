@@ -141,6 +141,34 @@ identified" status.
 **Tag:** none yet (same reasoning as `model-v1-first-fit` — `model-v1` is
 reserved for the full Stage 8 exit check).
 
+## model-v1-31train — Stage 8 third YOLO fit (learning curve, point 3)
+
+**Date:** 2026-10-24 (same day)
+**What:** Retrained after the student added 21 more labels (61 total: 31
+train / 20 val / **10 test — first test labels**, not used here or
+anywhere, per rule 3). Same setup as `model-v1-20train` (batch=8).
+
+**Result (val):** precision 0.704, recall 0.837, F1 0.765, mAP@0.5
+**0.814** (best yet), but count MAE **6.00** and bias **+5.40** — both
+*worse* than the 20-image run (4.20 / +2.70). **Non-monotonic, reported
+honestly, not smoothed over**: detection quality kept improving, count
+accuracy didn't. With one run per label-count point, there's no way yet to
+tell a genuine effect (e.g. the new row-3 images being harder in some
+way) from plain run-to-run noise — this is precisely the gap Stage 8 item
+4 (seed repeats) exists to close, and it's now a higher priority than it
+was.
+
+**Training-curve spike, now 3/3 runs and getting worse, not better**
+(peak val/cls_loss: ~100 → ~230 → ~400, moving earlier each time: epoch
+~27 → ~15 → ~10). Checked the LR-warmup-schedule hypothesis with real
+numbers from each run's `results.csv` and `args.yaml` — ruled out (predicted
+warmup-end epoch stays ~25-33 across all three runs; actual spike keeps
+moving earlier). Root cause still unidentified; see
+`docs/stage-8-notes.md` for what's been checked and what's still worth
+trying.
+
+**Tag:** none yet.
+
 **Caveat, stated plainly:** this is trained on only 10 images. A result
 this strong from so little data is encouraging but should be treated
 cautiously, for two reasons neither of which this run can rule out on its
