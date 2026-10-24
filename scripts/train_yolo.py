@@ -33,7 +33,7 @@ from src.geometry import Intrinsics  # noqa: E402
 from src.tracking import RunRecord, record_run  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SEED = 42
+DEFAULT_SEED = 42
 
 
 def load_gt(image_ids: list[str]) -> list[Apple2D]:
@@ -60,6 +60,10 @@ def main() -> int:
                               "Ultralytics' 0.7 default -- see docs/stage-8-notes.md: the looser default let "
                               "near-duplicate overlapping boxes on the same apple survive, inflating count MAE "
                               "from 6.00 to 2.60 at no F1 cost when tightened)")
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="training seed (for seed-repeat experiments)")
+    parser.add_argument("--lr0", type=float, default=0.01, help="initial learning rate (Ultralytics default 0.01)")
+    parser.add_argument("--cos-lr", action="store_true", help="use cosine LR schedule instead of linear decay")
+    parser.add_argument("--mosaic", type=float, default=1.0, help="mosaic augmentation probability (0 disables it)")
     args = parser.parse_args()
 
     data_yaml = REPO_ROOT / "configs" / "yolo_data.yaml"
@@ -73,7 +77,10 @@ def main() -> int:
         epochs=args.epochs,
         imgsz=640,
         batch=args.batch,
-        seed=SEED,
+        seed=args.seed,
+        lr0=args.lr0,
+        cos_lr=args.cos_lr,
+        mosaic=args.mosaic,
         workers=0,  # Windows: avoid data-loader worker hangs/crashes
         device=0,
         project=str(REPO_ROOT / "runs" / "yolo"),
@@ -121,9 +128,9 @@ def main() -> int:
     record_run(RunRecord(
         run_id=args.run_id,
         stage="stage-8",
-        seed=SEED,
+        seed=args.seed,
         config={"model": args.model, "epochs": args.epochs, "batch": args.batch, "imgsz": 640,
-                "nms_iou": args.iou,
+                "nms_iou": args.iou, "lr0": args.lr0, "cos_lr": args.cos_lr, "mosaic": args.mosaic,
                 "n_train_images": len(list((REPO_ROOT / "data/derived/yolo_dataset/images/train").glob("*.png")))},
         metrics_summary=f"val P={det['precision']:.3f} R={det['recall']:.3f} F1={det['f1']:.3f} mAP={det['mAP@0.5']:.3f} "
                          f"countMAE={summary['counting']['count_mae']:.2f} countBias={summary['counting']['count_bias']:+.2f}",
