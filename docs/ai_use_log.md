@@ -81,3 +81,22 @@ chance of the row shuffle. Test split has 0 labelled images right now;
 50 specific tree IDs recommended to label next.
 
 **Student review notes:**
+
+## Stage 4: Shared 3D module — 2026-10-24
+
+**Asked:** Build `src/geometry.py` (back-projection, robust depth
+sampling, surface-to-centre correction, optional sphere fit), test it on a
+synthetic sphere (within 1mm with no noise, with noise too), and write a
+hand-calculated worked example for one real labelled apple that the code
+must reproduce exactly.
+
+**Produced:** `src/geometry.py` (`backproject`, `robust_depth`,
+`apple_centre_3d` with `project_and_offset` and `sphere_fit` methods),
+`tests/test_geometry.py` (9 tests: synthetic-sphere accuracy with/without
+noise, missing-depth-returns-None behaviour, and exact reproduction of the
+worked example), `docs/stage-4-worked-example.md`, `docs/stage-4-notes.md`.
+All 29 project tests pass. The worked example surfaced a concrete
+consequence of the checkpoint-C1 depth-scale limitation: the computed
+apple radius (4.8mm) is not physically realistic.
+
+**Student review notes:**
