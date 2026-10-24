@@ -222,3 +222,27 @@ correct. Documented in `EXPERIMENTS.md` and both `docs/stage-6-notes.md`
 and `docs/stage-8-notes.md`.
 
 **Student review notes:**
+
+## Stage 8: second YOLO fit, learning curve started — 2026-10-24
+
+**Asked:** Student added 10 more labels (40 total: 20 train / 20 val / 0
+test) and asked to proceed; separately asked (side note) whether trying
+different segmentation models would be worth it.
+
+**Produced:** Picked up and validated the 10 new labels, refreshed
+manifest/conversion artifacts, rebuilt the YOLO dataset, retrained
+(`model-v1-20train`, 20 train images). Result: F1 0.770, mAP@0.5 0.786,
+count MAE 4.20 (all improved over the 10-image run; count accuracy now
+beats classical too). Added `scripts/plot_learning_curve.py` — 2 points
+so far (10, 20 images), explicitly flagged as too few for a trend.
+Re-checked the epoch-30 training-loss spike noted in the first run: it
+recurred (worse, not better) despite doubling batch size and train
+images, which weakens the earlier "small batch" guess — corrected the
+note to "cause not yet identified" rather than leave a wrong explanation
+standing. Answered the segmentation-model question as a brief
+recommendation (not implemented): worth trying once the learning curve
+shows signs of levelling off, since Stage 2 already exports YOLO
+segmentation labels and Stage 8 item 3 already plans a boxes-vs-
+segmentation comparison. 45/45 project tests pass (unchanged).
+
+**Student review notes:**
