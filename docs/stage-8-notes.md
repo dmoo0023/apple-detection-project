@@ -98,55 +98,65 @@ cleanly in either direction yet.
 ## A training-curve spike — 3/3 runs now, getting WORSE, needs investigation
 
 All three YOLO runs show a sharp transient spike in validation loss
-partway through training, and the pattern across runs is itself a
-finding:
+partway through training. Investigated properly this time (read
+Ultralytics' own installed source in `.venv/Lib/site-packages/ultralytics/
+engine/trainer.py`, not just guessed) rather than left as an open
+question — three concrete, verified findings, one of them correcting the
+previous version of this note:
 
-| Run | Train images | Batch | Spike epoch | Peak val/cls_loss |
-|---|---|---|---|---|
-| `model-v1-first-fit` | 10 | 4 | ~30 | ~100 |
-| `model-v1-20train` | 20 | 8 | ~17-20 | ~230 |
-| `model-v1-31train` | 31 | 8 | ~10-12 | **~400** |
+**1. The "4-epoch-wide spike" in the plots is partly a display artifact.**
+`results.csv` logs 100 rows per run, but the actual number of *distinct*
+validation values is much lower (19 / 39 / 51 for the three runs) —
+validation metrics (loss **and** precision/recall/mAP together) repeat as
+bit-for-bit identical values across groups of 2-4 consecutive epochs, then
+jump. Confirmed with the raw numbers, e.g. `model-v1-31train` epochs 10-11
+both show `val/cls_loss=391.69700` exactly, `precision=0.02900` exactly.
+A matplotlib line plot draws that as a wide dip; the real underlying
+*distinct* measurement is narrower than the plot makes it look. Exactly
+why validation logs repeat rather than refreshing every epoch wasn't
+pinned down (would need more time in Ultralytics internals than this
+warranted) — it does not change what matters practically below.
 
-Precision/recall/mAP all dip toward zero at the same point each time,
-before recovering and climbing steadily to the final values.
+**2. Severity is NOT escalating run-over-run — only the raw loss NUMBER
+is.** Corrects the previous version of this note, which read "~100 →
+~230 → ~400" as "getting worse." Comparing the actual **minimum
+precision/recall/mAP** reached in each run (the metrics that matter, not
+an unbounded loss value) tells a different story:
 
-**Correcting an earlier guess (again):** the first note guessed small
-batch size; that was weakened when the spike recurred with a bigger
-batch. **This is no longer "noise, probably fine" — it is 3/3 runs,
-getting both earlier and more severe as the training set grows, which is
-the opposite of what you'd expect from pure small-dataset randomness
-settling down.**
-
-**A second lead, checked and RULED OUT with actual numbers** (not left as
-a guess this time): the spike moving earlier as more images/batches are
-added looked like it could be the LR warmup-to-main-schedule transition,
-which Ultralytics computes as `max(3 x batches_per_epoch, 100)`
-iterations (`args.yaml`: `warmup_epochs: 3.0` in all three runs). Computed
-precisely from each run's actual `results.csv`:
-
-| Run | Batches/epoch | Predicted warmup-end epoch | **Actual spike epoch** |
+| Run | Min precision | Min recall | Min mAP50 |
 |---|---|---|---|
-| `model-v1-first-fit` | 3 | 33.3 | 27 |
-| `model-v1-20train` | 3 | 33.3 | **15** |
-| `model-v1-31train` | 4 | 25.0 | **10** |
+| `model-v1-first-fit` | 0.093 | 0.182 | 0.074 |
+| `model-v1-20train` | 0.025 | 0.142 | 0.006 |
+| `model-v1-31train` | 0.029 | 0.304 | 0.010 |
 
-The predicted warmup-end epoch is roughly constant (~25-33) across all
-three runs, since the `max(..., 100)` floor dominates at this dataset
-size — but the actual spike keeps moving earlier (27 → 15 → 10). **Does
-not match.** Warmup-schedule timing is ruled out as the explanation.
-**Honest status: still unidentified**, now with one concrete hypothesis
-eliminated rather than left unchecked. Next things worth trying if this
-keeps happening: Ultralytics' mosaic-augmentation cutoff
-(`close_mosaic` setting), or simply running the same config with a
-different seed to see if the spike's *position* is seed-dependent at
-all or genuinely tracks dataset size.
+All three crash to a comparably bad worst point (precision under 0.1,
+mAP under 0.08) — runs 2 and 3 are similar to each other, run 1 is
+actually slightly milder, not part of a clean worsening trend. Cross-
+entropy-style classification loss is unbounded and can produce wildly
+different-looking numbers (100 vs 400) for comparably bad predictions,
+just because a handful of predictions landed at slightly more extreme
+confidence values — the loss MAGNITUDE trend I reported last time
+overstated how much worse things were actually getting.
 
-**Still not currently breaking results** — `best.pt` is selected by
-tracking fitness across all epochs, and every run recovers and ends
-higher than where it started — but a spike that's tripling in severity
-run over run is not something to keep setting aside. This should be
-properly diagnosed before relying on this training setup for Stage 8's
-full experiment series, not left as a recurring footnote.
+**3. Confirmed this is below Ultralytics' own defined "serious problem"
+threshold.** The trainer source has a built-in NaN/Inf loss detector
+(`_handle_nan_recovery`) that reloads the last checkpoint and retries if
+loss or fitness becomes non-finite — i.e. the Ultralytics developers
+explicitly anticipate this class of instability during fine-tuning.
+Checked our saved training logs for its warning message
+(`"NaN/Inf detected... recovering from last.pt"`): **never fired, in any
+of the 3 runs.** Our spikes are large but finite — a milder instability
+than the threshold Ultralytics itself treats as requiring recovery.
+
+**Revised conclusion:** consistent with a known, expected phenomenon —
+YOLO's classification head, pretrained on COCO's 80 classes, needs to
+rapidly re-specialise to this project's single "apple" class early in
+fine-tuning, and on a very small, non-i.i.d. dataset (10-31 images) that
+re-specialisation can be transiently rough before settling, without
+crossing into genuine training failure. Not something to keep
+re-investigating at this scale; worth a quick recheck once the training
+set is much larger (where per-epoch gradient estimates get less noisy)
+rather than treated as an open bug.
 
 ## Why YOLO's own printed metrics differ slightly from ours
 

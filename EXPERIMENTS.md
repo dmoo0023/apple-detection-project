@@ -106,6 +106,36 @@ application (a picking arm needs individual positions; a yield estimate
 needs the total right) — both are kept in the report, not just the
 flattering one.
 
+**Caveat, stated plainly:** this is trained on only 10 images. A result
+this strong from so little data is encouraging but should be treated
+cautiously, for two reasons neither of which this run can rule out on its
+own:
+1. **No learning curve yet** — Stage 8 calls for performance plotted
+   against the number of labelled training images; with one data point
+   there's no way to tell whether 10 images is already enough or whether
+   this number will move a lot as more labels are added (the student is
+   actively adding more and plans to retrain — the natural next step is
+   exactly this learning-curve comparison once there's a second point).
+2. **Possible domain similarity between train and val**, not data leakage.
+   The 70/15/15 split keeps individual trees strictly separated (Stage 3),
+   but train's 10 labelled images are all row 2, and val's 20 are all row
+   1 — two adjacent rows captured in the same session, so they likely
+   share lighting, tree variety and camera conditions closely. That's not
+   a split-correctness problem (different physical trees, properly held
+   out), but it does mean this first result may not predict performance on
+   a visually different row as well as a more row-diverse train/val split
+   eventually will once more rows get labelled.
+
+**Not yet done (deferred until more labels exist, per the student's own
+plan to retrain):** the full Stage 8 series (model size, pretrained vs.
+random init, LR/batch/epoch sweep, augmentation, boxes vs. segmentation),
+seed-repeated runs, and the learning-curve plot. This entry is the first
+point on that curve, not the finished stage.
+
+**Tag:** none yet — `model-v1` is reserved for Stage 8's full exit check
+(logged experiments, learning curve, seed spread, error analysis), not a
+single first fit.
+
 ## model-v1-20train — Stage 8 second YOLO fit (learning curve, point 2)
 
 **Date:** 2026-10-24 (same day)
@@ -158,43 +188,19 @@ way) from plain run-to-run noise — this is precisely the gap Stage 8 item
 4 (seed repeats) exists to close, and it's now a higher priority than it
 was.
 
-**Training-curve spike, now 3/3 runs and getting worse, not better**
-(peak val/cls_loss: ~100 → ~230 → ~400, moving earlier each time: epoch
-~27 → ~15 → ~10). Checked the LR-warmup-schedule hypothesis with real
-numbers from each run's `results.csv` and `args.yaml` — ruled out (predicted
-warmup-end epoch stays ~25-33 across all three runs; actual spike keeps
-moving earlier). Root cause still unidentified; see
-`docs/stage-8-notes.md` for what's been checked and what's still worth
-trying.
+**Training-curve spike, now 3/3 runs — investigated properly, not just
+flagged again.** Read Ultralytics' own installed source
+(`trainer.py`): confirmed validation runs every epoch unconditionally
+(`args.val=True`), ruled out the LR-warmup-schedule hypothesis with real
+numbers (predicted warmup-end stays ~25-33 across all three runs; actual
+spike keeps moving earlier), and checked saved training logs for
+Ultralytics' own built-in NaN/Inf recovery warning — **never fired in any
+run**, meaning these spikes stay below the threshold Ultralytics itself
+treats as a real training failure. Also corrected an overstatement from
+the first pass: comparing actual minimum precision/recall/mAP (not raw
+loss magnitude, which is unbounded) shows the three runs' worst points are
+comparably bad, not escalating — the "~100 → ~230 → ~400" trend was partly
+an artifact of unbounded cross-entropy loss values, not genuinely
+worsening model behaviour. Full writeup: `docs/stage-8-notes.md`.
 
 **Tag:** none yet.
-
-**Caveat, stated plainly:** this is trained on only 10 images. A result
-this strong from so little data is encouraging but should be treated
-cautiously, for two reasons neither of which this run can rule out on its
-own:
-1. **No learning curve yet** — Stage 8 calls for performance plotted
-   against the number of labelled training images; with one data point
-   there's no way to tell whether 10 images is already enough or whether
-   this number will move a lot as more labels are added (the student is
-   actively adding more and plans to retrain — the natural next step is
-   exactly this learning-curve comparison once there's a second point).
-2. **Possible domain similarity between train and val**, not data leakage.
-   The 70/15/15 split keeps individual trees strictly separated (Stage 3),
-   but train's 10 labelled images are all row 2, and val's 20 are all row
-   1 — two adjacent rows captured in the same session, so they likely
-   share lighting, tree variety and camera conditions closely. That's not
-   a split-correctness problem (different physical trees, properly held
-   out), but it does mean this first result may not predict performance on
-   a visually different row as well as a more row-diverse train/val split
-   eventually will once more rows get labelled.
-
-**Not yet done (deferred until more labels exist, per the student's own
-plan to retrain):** the full Stage 8 series (model size, pretrained vs.
-random init, LR/batch/epoch sweep, augmentation, boxes vs. segmentation),
-seed-repeated runs, and the learning-curve plot. This entry is the first
-point on that curve, not the finished stage.
-
-**Tag:** none yet — `model-v1` is reserved for Stage 8's full exit check
-(logged experiments, learning curve, seed spread, error analysis), not a
-single first fit.

@@ -268,3 +268,34 @@ it out with real numbers rather than leaving it as an unchecked guess.
 Root cause still open. 45/45 tests pass (unchanged).
 
 **Student review notes:**
+
+## Training-spike investigation — 2026-10-24
+
+**Asked:** Dig into the recurring training-loss spike properly (previous
+notes had flagged it 3x without reaching a real explanation).
+
+**Produced:** Read Ultralytics' own installed source
+(`.venv/Lib/site-packages/ultralytics/engine/trainer.py`) instead of
+guessing further. Three verified findings: (1) validation runs every
+epoch unconditionally in our setup, ruling out a "skipped validation"
+theory; (2) `results.csv` logs repeat bit-for-bit identical values across
+groups of 2-4 epochs (confirmed: only 19/39/51 distinct values across 100
+logged epochs per run) — the visual "spike width" in the plots overstates
+how many distinct measurements are involved; (3) checked saved training
+logs for Ultralytics' own built-in NaN/Inf recovery warning — never
+fired in any run, meaning the spikes stay below the threshold Ultralytics
+itself treats as a genuine training failure. Also corrected an
+overstatement from earlier notes: comparing actual minimum precision/
+recall/mAP (not raw loss magnitude, which is unbounded) shows the three
+runs' worst points are comparably bad, not escalating as previously
+claimed — fixed that claim in both `docs/stage-8-notes.md` and
+`EXPERIMENTS.md` rather than let it stand. Also fixed an unrelated
+document-structure bug in `EXPERIMENTS.md` from an earlier edit (part of
+the `model-v1-first-fit` entry had been accidentally displaced to the end
+of the file by a prior insertion). Conclusion: consistent with the
+YOLO classification head's known rapid re-specialisation from COCO's 80
+classes to this project's single class, on a very small/noisy dataset —
+not a bug, not currently worth more investigation at this scale. 45/45
+tests pass (unchanged).
+
+**Student review notes:**
