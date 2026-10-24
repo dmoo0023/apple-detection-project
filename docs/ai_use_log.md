@@ -49,3 +49,19 @@ accuracy cannot be rigorously verified with this setup. Stage 1 exit check
 now passes; tagging `stage-1-done` and merging to `main`.
 
 **Student review notes:**
+
+## Stage 2: Label conversion — 2026-10-24
+
+**Asked:** Convert the 25 labelme circle labels into YOLO detection and
+segmentation formats plus a flat per-apple CSV, in one shared module, with
+warnings for bad circles and a round-trip test.
+
+**Produced:** Conversion functions added to `src/labels.py`
+(`extract_apples`, `yolo_detection_line`, `yolo_segmentation_line`, and
+their inverses), `scripts/convert_labels.py`, `data/derived/apples_2d.csv`,
+`data/derived/labels_det/`, `data/derived/labels_seg/`,
+`data/derived/stage2_overlays/`, `tests/test_labels.py` (11 new tests, all
+passing), `docs/stage-2-notes.md`. All 25 images converted with zero
+warnings (781 apples).
+
+**Student review notes:**
