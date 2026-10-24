@@ -40,29 +40,46 @@ that's a red flag worth investigating before trusting the fancier method.
 
 The five colour thresholds (two hue bounds, saturation minimum, value
 minimum, Lab 'a' minimum) were grid-searched — 32 combinations — scored by
-**F1 on the train split's 7 currently-labelled images only**, never val or
+**F1 on the train split's currently-labelled images only** (10, as of the
+2026-10-24 re-tune — was 7 at first run), never val or
 test (rule 3). The best combination (train F1 = 0.545) was then evaluated
 **once** on the 20 labelled val images through `src/evaluate.py`.
 
 ## Result
 
+**Updated 2026-10-24** after the train split grew from 7 to 10 labelled
+images (Stage 7/8's ongoing labelling) — the grid search was re-run and
+picked a different threshold combination; numbers below are current.
+
 | Metric | Value |
 |---|---|
-| Precision | 0.660 |
-| Recall | 0.404 |
-| F1 | 0.501 |
-| mAP@0.5 | 0.103 |
+| Precision | 0.583 |
+| Recall | 0.593 |
+| F1 | 0.588 |
+| mAP@0.5 | 0.211 |
+| Count MAE (apples/image) | 5.15 |
+| Count bias | +0.45 (slight over-counting) |
+| Count correlation | 0.902 |
 
 Full breakdown: `results/baseline_colour_v1_val_summary.md` and
-`results/baseline_colour_v1_val_matches.csv`. Train F1 (0.545) and val F1
-(0.501) are close, so the 7-image tuning set isn't *wildly* overfit, but 7
-images is a small basis for picking thresholds — worth re-checking once
-Stage 7 adds more labels.
+`results/baseline_colour_v1_val_matches.csv`. Train F1 (0.540) and val F1
+(0.588) stay close, so the (now 10-image) tuning set isn't *wildly*
+overfit, but 10 images is still a small basis for picking thresholds —
+worth re-checking again as more labels arrive.
 
-**Why mAP@0.5 (0.103) is so much lower than F1 (0.501):** F1 uses the
+**Why mAP@0.5 (0.211) is so much lower than F1 (0.588):** F1 uses the
 lenient centre-distance match (within half the labelled radius); mAP@0.5
 requires 50% box overlap (IoU), which the classical pipeline's circles
 often miss even when well-centred, because of the next finding.
+
+**The count-accuracy metric (added after a student request, see
+`EXPERIMENTS.md`) is a different question from F1/mAP**: it asks whether
+the *total number* of apples predicted per image is close to the true
+count, regardless of whether individual apples were correctly localised.
+Classical's count bias here (+0.45, barely over-counting) looks good in
+isolation — see Stage 8's notes for why this is actually a case where a
+weaker per-apple detector produces a *more* accurate count than a
+stronger one.
 
 ## Failure modes (from `data/derived/stage6_overlays/`)
 

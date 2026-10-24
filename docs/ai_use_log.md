@@ -202,3 +202,23 @@ general apple-detection ability — both stated explicitly in
 tests pass (unchanged; no test code touched this round).
 
 **Student review notes:**
+
+## Evaluation: added apple-count accuracy metric — 2026-10-24
+
+**Asked:** Add a metric summarising model accuracy in terms of apple
+*count* (not just per-apple match quality) — relevant for yield estimation.
+
+**Produced:** `count_accuracy()` in `src/evaluate.py` (MAE, RMSE, signed
+bias, correlation of predicted vs. true apple count per image), wired into
+`summarise()`/`summary_to_markdown()`, 3 new tests (45/45 project tests
+pass). Re-ran classical baseline (which also picked up 3 more train labels
+added earlier, 10 total now) and re-evaluated the existing YOLO weights
+(no retrain) to populate the new metric for both. Found a genuinely
+interesting result: YOLO wins every per-apple metric but classical has
+better count accuracy (MAE 5.15 vs 7.00, bias +0.45 vs +6.40) — YOLO's
+higher recall comes from far more total predictions, which pushes raw
+per-image counts further from truth despite being individually more often
+correct. Documented in `EXPERIMENTS.md` and both `docs/stage-6-notes.md`
+and `docs/stage-8-notes.md`.
+
+**Student review notes:**

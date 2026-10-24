@@ -40,20 +40,43 @@ to mean anything, which is exactly what's coming as more labels land.
 
 ## Result
 
+Classical's numbers below are after its own re-tune on the now-10-image
+train split (see `docs/stage-6-notes.md`'s update note) — both methods
+compared on the same, current train/val split.
+
 | | Classical baseline | YOLO (first fit) |
 |---|---|---|
-| Precision | 0.660 | 0.676 |
-| Recall | 0.404 | 0.827 |
-| F1 | 0.501 | **0.744** |
-| mAP@0.5 | 0.103 | **0.756** |
+| Precision | 0.583 | 0.676 |
+| Recall | 0.593 | 0.827 |
+| F1 | 0.588 | **0.744** |
+| mAP@0.5 | 0.211 | **0.756** |
+| Count MAE (apples/image) | **5.15** | 7.00 |
+| Count bias | **+0.45** | +6.40 |
+| Count correlation | 0.902 | **0.968** |
 
 Full tables: `results/model-v1-first-fit_val_summary.md` /
-`..._val_matches.csv`. A large jump on every metric, trained on just 10
-labelled images — see the caveats in `EXPERIMENTS.md` before reading this
-as a finished result (small training set, and train/val being adjacent
-orchard rows means some of this apparent strength could be domain
+`..._val_matches.csv`. YOLO wins clearly on every per-apple metric
+(F1, mAP, precision, recall) — see the caveats in `EXPERIMENTS.md` before
+reading this as a finished result (small training set, and train/val being
+adjacent orchard rows means some of this apparent strength could be domain
 similarity rather than a method that will hold up as more, visually
 different rows get labelled).
+
+**But classical wins on apple COUNT accuracy** (added as a metric after a
+student request): MAE 5.15 vs YOLO's 7.00, and a far smaller over-counting
+bias (+0.45 vs +6.40). This is not a contradiction — it's exactly what the
+two metrics are built to show differently. YOLO's much higher recall
+(0.827 vs 0.593) comes from making substantially more total predictions
+(700 vs 581 across 20 val images, for 572 true apples), and while a higher
+fraction of YOLO's predictions are individually correct (precision 0.676
+vs 0.583), the raw volume of extra predictions pushes its per-image counts
+further from the true count on average than classical's more conservative
+(lower-recall, lower-volume) predictions do. **Which metric matters more
+depends on the application**: a picking robot cares about each apple's
+individual position (F1/mAP territory), while a yield-estimation use case
+cares more about getting the total count right (this new metric's
+territory) — this is a genuine, non-obvious trade-off worth keeping in the
+final report, not a bug in either number.
 
 ## A training-curve wobble worth noting
 

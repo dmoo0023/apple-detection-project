@@ -1,9 +1,9 @@
 {
   "hue_low_max": 8,
   "hue_high_min": 165,
-  "sat_min": 50,
-  "val_min": 30,
-  "lab_a_min": 155,
+  "sat_min": 90,
+  "val_min": 60,
+  "lab_a_min": 135,
   "morph_kernel_px": 5,
   "min_area_px": 30,
   "watershed_dist_frac": 0.5

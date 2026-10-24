@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.evaluate import (  # noqa: E402
     Apple2D,
     average_precision_at_iou,
+    count_accuracy,
     match_all,
     per_match_errors,
     precision_recall_f1,
@@ -66,6 +67,47 @@ def test_trivial_predictor_scores_perfectly() -> None:
     assert summary["overall"]["median_error_3d_proxy_cm"] == pytest.approx(0.0, abs=1e-6)
     assert summary["overall"]["within_2cm_frac"] == pytest.approx(1.0)
     assert summary["overall"]["within_3cm_frac"] == pytest.approx(1.0)
+    assert summary["counting"]["count_mae"] == pytest.approx(0.0)
+    assert summary["counting"]["count_bias"] == pytest.approx(0.0)
+
+
+# --- apple-count accuracy ----------------------------------------------------
+
+def test_count_accuracy_trivial_predictor_zero_error() -> None:
+    gt = make_gt("img1") + make_gt("img2")
+    pred = [Apple2D(a.image_id, a.cx, a.cy, a.radius_px) for a in gt]
+    result = count_accuracy(gt, pred)
+    assert result["n_images"] == 2
+    assert result["count_mae"] == pytest.approx(0.0)
+    assert result["count_rmse"] == pytest.approx(0.0)
+    assert result["count_bias"] == pytest.approx(0.0)
+
+
+def test_count_accuracy_detects_systematic_undercounting() -> None:
+    # 2 images, 3 gt apples each; predictor always finds only 2 (drops one, regardless of
+    # which one, or even whether the 2 it keeps are correctly localised).
+    gt = make_gt("img1") + make_gt("img2")
+    pred = [
+        Apple2D("img1", 10, 10, 5), Apple2D("img1", 20, 20, 5),
+        Apple2D("img2", 10, 10, 5), Apple2D("img2", 20, 20, 5),
+    ]
+    result = count_accuracy(gt, pred)
+    assert result["n_images"] == 2
+    assert result["count_mae"] == pytest.approx(1.0)
+    assert result["count_bias"] == pytest.approx(-1.0)  # negative = under-counting
+    assert len(result["per_image"]) == 2
+    assert set(result["per_image"]["count_error"]) == {-1}
+
+
+def test_count_accuracy_handles_image_with_no_gt_or_pred() -> None:
+    gt = [Apple2D("img1", 10, 10, 5)]
+    pred = [Apple2D("img1", 10, 10, 5), Apple2D("img2", 50, 50, 5)]  # img2: pure false positives, no gt at all
+    result = count_accuracy(gt, pred)
+    assert result["n_images"] == 2
+    row_img2 = result["per_image"][result["per_image"]["image_id"] == "img2"].iloc[0]
+    assert row_img2["gt_count"] == 0
+    assert row_img2["pred_count"] == 1
+    assert row_img2["count_error"] == 1
 
 
 # --- deliberately shifted copy: expected, predictable error -----------------

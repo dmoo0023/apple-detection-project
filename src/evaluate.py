@@ -11,6 +11,7 @@ Two kinds of apples flow through this module:
 Both are represented as Apple2D (image_id, cx, cy, radius_px, score).
 """
 
+from collections import Counter
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -175,6 +176,58 @@ def average_precision_at_iou(gt: list[Apple2D], pred: list[Apple2D], iou_thresho
     return ap
 
 
+# --- 2b. Apple-COUNT accuracy -------------------------------------------------
+#
+# A different question from precision/recall/F1: those score whether each
+# INDIVIDUAL apple was correctly localised. This scores whether the model
+# gets the TOTAL NUMBER of apples right per image/tree, even if some
+# individual matches are wrong (e.g. one detection drifted onto a
+# neighbouring apple while the count still came out correct) -- relevant
+# for yield-estimation use cases, not just a picking arm that needs each
+# apple's position.
+
+def count_accuracy(gt: list[Apple2D], pred: list[Apple2D]) -> dict:
+    """Per-image apple-count accuracy. Returns a dict with:
+      n_images, count_mae (mean absolute error in apples/image),
+      count_rmse, count_bias (mean signed error: pred - gt; positive =
+      systematic over-counting, negative = systematic under-counting),
+      count_correlation (Pearson r between per-image predicted and true
+      counts, NaN if either has zero variance), and per_image (a DataFrame
+      with one row per image: image_id, gt_count, pred_count, count_error).
+    """
+    image_ids = sorted(set(a.image_id for a in gt) | set(a.image_id for a in pred))
+    gt_counts = Counter(a.image_id for a in gt)
+    pred_counts = Counter(a.image_id for a in pred)
+
+    rows = []
+    for image_id in image_ids:
+        g, p = gt_counts.get(image_id, 0), pred_counts.get(image_id, 0)
+        rows.append({"image_id": image_id, "gt_count": g, "pred_count": p, "count_error": p - g})
+    per_image = pd.DataFrame(rows)
+
+    if per_image.empty:
+        return {"n_images": 0, "count_mae": float("nan"), "count_rmse": float("nan"),
+                "count_bias": float("nan"), "count_correlation": float("nan"), "per_image": per_image}
+
+    errors = per_image["count_error"].to_numpy(dtype=float)
+    gt_arr = per_image["gt_count"].to_numpy(dtype=float)
+    pred_arr = per_image["pred_count"].to_numpy(dtype=float)
+
+    if gt_arr.std() > 0 and pred_arr.std() > 0:
+        correlation = float(np.corrcoef(gt_arr, pred_arr)[0, 1])
+    else:
+        correlation = float("nan")  # undefined when every image has the same count on one side
+
+    return {
+        "n_images": len(image_ids),
+        "count_mae": float(np.mean(np.abs(errors))),
+        "count_rmse": float(np.sqrt(np.mean(errors**2))),
+        "count_bias": float(np.mean(errors)),
+        "count_correlation": correlation,
+        "per_image": per_image,
+    }
+
+
 # --- 3/4. Per-match 2D and 3D (proxy) error ----------------------------------
 
 def per_match_errors(
@@ -261,6 +314,9 @@ def summarise(
     detection = precision_recall_f1(match_results)
     detection["mAP@0.5"] = average_precision_at_iou(gt, pred, iou_threshold=0.5)
 
+    counting = count_accuracy(gt, pred)
+    counting_scalars = {k: v for k, v in counting.items() if k != "per_image"}
+
     def _block(df: pd.DataFrame) -> dict:
         if df.empty:
             return {"n": 0}
@@ -274,7 +330,8 @@ def summarise(
             "within_3cm_frac": float((valid_3d <= 3.0).mean()) if len(valid_3d) else float("nan"),
         }
 
-    summary = {"detection": detection, "overall": _block(match_df), "by_distance_band": {}}
+    summary = {"detection": detection, "counting": counting_scalars, "overall": _block(match_df),
+               "by_distance_band": {}}
     # "out_of_range" (a valid depth, but outside every defined band -- this project's real
     # data regularly falls below 0.4m due to the checkpoint-C1 depth-scale limitation) and
     # "unknown" (no usable depth at all) must both be reported, not silently dropped --
@@ -302,6 +359,16 @@ def summary_to_markdown(summary: dict, method_name: str, split_name: str) -> str
         f"- Detection: precision={d['precision']:.3f}, recall={d['recall']:.3f}, "
         f"F1={d['f1']:.3f}, mAP@0.5={d['mAP@0.5']:.3f} (TP={d['tp']}, FP={d['fp']}, FN={d['fn']})",
     ]
+    c = summary.get("counting")
+    if c and c.get("n_images", 0):
+        corr_str = f"{c['count_correlation']:.3f}" if np.isfinite(c["count_correlation"]) else "n/a"
+        lines.append(
+            f"- **Apple count per image** (how close is the TOTAL count, not individual "
+            f"matches -- {c['n_images']} images): MAE={c['count_mae']:.2f} apples/image, "
+            f"RMSE={c['count_rmse']:.2f}, bias={c['count_bias']:+.2f} "
+            f"({'over' if c['count_bias'] > 0 else 'under' if c['count_bias'] < 0 else 'no'}-counting "
+            f"on average), correlation={corr_str}"
+        )
     if o.get("n", 0):
         lines.append(
             f"- Overall ({o['n']} matched apples): median 2D error = {o['median_error_2d_px']:.2f}px "
