@@ -89,6 +89,52 @@ def test_detect_apples_separates_two_touching_apples() -> None:
     assert centres[1][0] == pytest.approx(150, abs=6.0)
 
 
+SHADOW_APPLE_RGB = (60, 45, 42)      # dark, desaturated red -- an apple in shade
+HIGHLIGHT_APPLE_RGB = (230, 120, 60)  # bright, orange-shifted -- an apple in direct sun glare
+
+
+def test_primary_variant_alone_misses_shadow_and_highlight_apples() -> None:
+    img = blank_image()
+    cv2.circle(img, (100, 100), 15, SHADOW_APPLE_RGB, -1)
+    cv2.circle(img, (60, 60), 15, HIGHLIGHT_APPLE_RGB, -1)
+    primary_only = ClassicalConfig(use_shadow_variant=False, use_highlight_variant=False)
+    mask = segment_red_mask(img, primary_only)
+    assert mask[100, 100] == 0
+    assert mask[60, 60] == 0
+
+
+def test_shadow_variant_catches_dark_desaturated_red() -> None:
+    img = blank_image()
+    cv2.circle(img, (100, 100), 15, SHADOW_APPLE_RGB, -1)
+    mask = segment_red_mask(img, ClassicalConfig(use_shadow_variant=True, use_highlight_variant=False))
+    assert mask[100, 100] == 255
+
+
+def test_highlight_variant_catches_bright_orange_shifted_red() -> None:
+    img = blank_image()
+    cv2.circle(img, (100, 100), 15, HIGHLIGHT_APPLE_RGB, -1)
+    mask = segment_red_mask(img, ClassicalConfig(use_shadow_variant=False, use_highlight_variant=True))
+    assert mask[100, 100] == 255
+
+
+def test_shadow_and_highlight_variants_still_reject_background() -> None:
+    img = blank_image()
+    cv2.circle(img, (100, 100), 15, LEAF_RGB, -1)
+    config = ClassicalConfig(use_shadow_variant=True, use_highlight_variant=True)
+    mask = segment_red_mask(img, config)
+    assert mask[100, 100] == 0
+    assert mask[10, 10] == 0  # plain brown/soil background
+
+
+def test_detect_apples_finds_shaded_apple_end_to_end() -> None:
+    img = blank_image()
+    cv2.circle(img, (100, 90), 18, SHADOW_APPLE_RGB, -1)
+    detections = detect_apples(img, ClassicalConfig(use_shadow_variant=True))
+    assert len(detections) == 1
+    assert detections[0].cx == pytest.approx(100, abs=2.0)
+    assert detections[0].cy == pytest.approx(90, abs=2.0)
+
+
 def test_detect_apples_ignores_pure_background() -> None:
     img = blank_image()
     cv2.circle(img, (60, 60), 20, LEAF_RGB, -1)

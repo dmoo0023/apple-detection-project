@@ -348,3 +348,26 @@ accuracy (true before the NMS fix, not after). 45/45 tests pass
 (unchanged).
 
 **Student review notes:**
+
+## Multi-colour classical detector — tried, reverted — 2026-10-24
+
+**Asked:** Modify the classical detector to use multiple colours for the
+apple. Clarified first: broaden single-colour red detection to catch
+shaded/dark-red and bright/orange-highlight apple skin, not add genuinely
+different colour families.
+
+**Produced:** Two extra HSV+Lab colour variants in `src/classical.py`,
+OR'd with the existing grid-searched primary variant, with 5 new passing
+synthetic unit tests. On real data: a severe regression (F1 0.560→0.366,
+false positives 332→1134, count MAE 5.00→33.68) — the "highlight" variant
+matched a background wall almost exactly and both variants picked up far
+more real orchard clutter than synthetic test colours anticipated.
+Reported the regression with full numbers and overlay evidence before
+taking any action; student chose to revert. `use_shadow_variant`/
+`use_highlight_variant` now default `False`; verified the revert
+reproduces the known-good baseline numbers bit-for-bit. Code kept (not
+deleted) for future retightening against real data. Documented as a
+negative result in `docs/stage-6-notes.md` and `EXPERIMENTS.md` rather
+than quietly undone, per rule 9. 50/50 tests pass.
+
+**Student review notes:**
