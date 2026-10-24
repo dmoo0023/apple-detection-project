@@ -19,6 +19,7 @@ import numpy as np
 
 @dataclass
 class ClassicalConfig:
+    # --- Primary variant: well-lit red apple skin (grid-searched, Stage 6) ---
     # HSV red thresholds. Hue wraps at 0/180 in OpenCV's 0-179 scale, so red
     # needs TWO ranges: one just above 0, one just below 180.
     hue_low_max: int = 10        # red range 1: hue in [0, hue_low_max]
@@ -27,7 +28,29 @@ class ClassicalConfig:
     val_min: int = 40
     # Lab 'a' channel (green-red axis; higher = more red), 0-255, 128 = neutral.
     lab_a_min: int = 150
-    # Morphology
+
+    # --- Extra colour variants, OR'd with the primary when enabled. OFF BY
+    # DEFAULT: tried on real data and made every metric much worse (F1
+    # 0.560->0.366, false positives 332->1134, count MAE 5.00->33.68) --
+    # see docs/stage-6-notes.md. The intent was sound (real apple skin
+    # ranges from a shaded, darker red to a washed-out, orange highlight
+    # where direct sun overexposes it), but these fixed, hand-picked
+    # thresholds turned out to match real background clutter (soil, bark,
+    # a background wall) far more than synthetic test colours suggested.
+    # Kept in the code, disabled by default, for anyone who wants to
+    # retighten the thresholds against real data rather than guesses. ---
+    use_shadow_variant: bool = False
+    shadow_sat_min: int = 35     # shaded red loses saturation as well as brightness
+    shadow_val_min: int = 15     # dark, but still above near-black background/soil
+    shadow_lab_a_min: int = 120  # a weaker, but still clearly reddish, Lab 'a' signal
+
+    use_highlight_variant: bool = False
+    highlight_hue_max: int = 22  # extends toward orange (OpenCV hue 0-179 scale)
+    highlight_sat_min: int = 60
+    highlight_val_min: int = 130  # bright only -- this is what distinguishes a sunlit
+                                   # highlight from dull orange-brown soil/branches
+
+    # --- Shared post-processing ---
     morph_kernel_px: int = 5
     # Minimum region area to keep (rejects speckle/noise before circle fitting)
     min_area_px: int = 30
@@ -39,26 +62,56 @@ class ClassicalConfig:
         return self.__dict__.copy()
 
 
+def _colour_mask(h: np.ndarray, s: np.ndarray, v: np.ndarray, a_channel: np.ndarray,
+                  hue_low_max: int, hue_high_min: int, sat_min: int, val_min: int, lab_a_min: int) -> np.ndarray:
+    """One HSV+Lab colour-variant test, combined with AND (both cues must agree)."""
+    hue_mask = (h <= hue_low_max) | (h >= hue_high_min)
+    sv_mask = (s >= sat_min) & (v >= val_min)
+    lab_mask = a_channel >= lab_a_min
+    return hue_mask & sv_mask & lab_mask
+
+
 def segment_red_mask(rgb: np.ndarray, config: ClassicalConfig) -> np.ndarray:
-    """Binary mask (uint8, 0 or 255) of pixels that look like red apple skin,
-    combining HSV hue/saturation/value thresholds with a Lab 'a' channel
-    threshold (two independent colour cues, combined with AND, so a pixel
-    only counts if both agree it's red -- cuts down on single-channel
-    false positives like a reddish-brown branch passing the HSV test
-    alone).
+    """Binary mask (uint8, 0 or 255) of pixels that look like red apple skin.
+
+    Real apple skin spans a range of appearances in one image, not one
+    colour: a well-lit, saturated red; a darker, less saturated red where
+    the fruit falls into its own or a leaf's shadow; and a washed-out,
+    more orange/yellow patch where direct sun overexposes the skin. Each
+    is tested as its own HSV+Lab colour variant (hue/sat/val AND Lab 'a'
+    channel must all agree within that variant -- the usual single-colour
+    cross-check), and a pixel counts as apple-coloured if it matches ANY
+    enabled variant (OR'd together). This trades a bit more false-positive
+    risk (more colours, more chances for a coincidental match) for
+    recovering apples the single, well-lit-only threshold would miss
+    entirely under shade or glare -- see docs/stage-6-notes.md's "shade
+    kills recall" failure mode, which this is meant to fix.
     """
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
-    hue_mask = ((h <= config.hue_low_max) | (h >= config.hue_high_min))
-    sv_mask = (s >= config.sat_min) & (v >= config.val_min)
-    hsv_mask = hue_mask & sv_mask
-
     lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2Lab)
     a_channel = lab[..., 1]
-    lab_mask = a_channel >= config.lab_a_min
 
-    combined = (hsv_mask & lab_mask).astype(np.uint8) * 255
-    return combined
+    combined_mask = _colour_mask(
+        h, s, v, a_channel,
+        config.hue_low_max, config.hue_high_min, config.sat_min, config.val_min, config.lab_a_min,
+    )
+
+    if config.use_shadow_variant:
+        combined_mask |= _colour_mask(
+            h, s, v, a_channel,
+            config.hue_low_max, config.hue_high_min,
+            config.shadow_sat_min, config.shadow_val_min, config.shadow_lab_a_min,
+        )
+
+    if config.use_highlight_variant:
+        combined_mask |= _colour_mask(
+            h, s, v, a_channel,
+            config.highlight_hue_max, config.hue_high_min,
+            config.highlight_sat_min, config.highlight_val_min, config.lab_a_min,
+        )
+
+    return (combined_mask.astype(np.uint8)) * 255
 
 
 def clean_mask(mask: np.ndarray, config: ClassicalConfig) -> np.ndarray:

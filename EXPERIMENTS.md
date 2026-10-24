@@ -242,6 +242,49 @@ used `drop_duplicates(keep="first")`, which would have kept each run's
 *original* (stale, pre-fix) logged metrics instead of the re-evaluated
 ones. Changed to `keep="last"`.
 
+## Multi-colour classical detector — tried, reverted (negative result kept)
+
+**Date:** 2026-10-24 (same day)
+**What:** Student asked to make the classical detector recognise multiple
+colours of apple skin, clarified as: broaden the single "well-lit red"
+threshold to also catch shaded/dark-red and bright/orange-highlight
+apple skin (the direct fix for Stage 6's biggest failure mode, "shade
+kills recall"). Implemented as two extra HSV+Lab colour variants in
+`src/classical.py`, OR'd with the existing grid-searched primary variant.
+Validated with synthetic unit tests (12/12 passing): caught hand-picked
+dark-red and orange-red test apples, still rejected plain green leaf and
+one soil colour.
+
+**Result on real data: a severe regression, not an improvement.**
+Same train/val split (40/25), re-tuned grid search:
+
+| Metric | Single colour | Multi-colour |
+|---|---|---|
+| F1 | 0.560 | **0.366** |
+| Precision | 0.548 | **0.266** |
+| False positives | 332 | **1134** |
+| Count MAE | 5.00 | **33.68** |
+
+Inspecting overlays showed why: the "highlight" variant's hue/brightness
+range matches a tan/beige background wall in several images almost
+exactly, and both new variants pick up far more real-world soil/bark/
+dead-leaf clutter than the hand-picked synthetic test colours anticipated
+— the synthetic tests validated intent, not real-world specificity.
+
+**Reverted**, with the student's explicit go-ahead after seeing the
+numbers: `use_shadow_variant`/`use_highlight_variant` now default to
+`False`, restoring `baseline-colour-v1`'s known-good numbers exactly
+(verified: re-running after the revert reproduced F1=0.560, count
+MAE=5.00 bit-for-bit). Code kept, not deleted — available for future
+retightening against real data, or for adding the toggles to the grid
+search so it's chosen empirically. A process gap also worth noting: the
+grid search never tested "variants off" as an option in the first place
+(the new toggles weren't added to its search space), so this result
+needed a manual before/after rather than the grid search itself flagging
+the regression — worth fixing if this is revisited.
+
+**Tag:** none (reverted before being adopted).
+
 ## model-v1-40train — Stage 8 fourth YOLO fit (learning curve, point 4)
 
 **Date:** 2026-10-24 (same day)

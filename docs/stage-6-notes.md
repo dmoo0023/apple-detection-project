@@ -105,6 +105,40 @@ story. As of the latest numbers, YOLO leads on count accuracy too.
   sampled overlays — some evidence the HSV+Lab combination is doing its
   job, though 10 images is a small sample to be confident in that.
 
+## A failed experiment, kept in the writeup rather than deleted: multiple colour variants
+
+The "shade kills recall" failure mode above is this detector's biggest
+weakness, so the obvious next thing to try was recognising more than one
+shade of red: a well-lit primary red (the original, grid-searched
+detector), plus a darker/less-saturated "shadow" variant and a
+brighter/more-orange "highlight" variant, OR'd together in
+`segment_red_mask()`. Synthetic unit tests confirmed the *intent* worked
+(caught hand-picked dark-red and orange-red test colours, still rejected
+plain green and one soil colour) — but on the real dataset it was a
+**severe regression**, not an improvement:
+
+| Metric | Single colour (kept) | Multi-colour (tried, reverted) |
+|---|---|---|
+| Precision | 0.548 | 0.266 |
+| F1 | 0.560 | 0.366 |
+| False positives | 332 | 1134 |
+| Count MAE | 5.00 | 33.68 |
+
+Looking at the overlays explained why: the "highlight" variant's hue/
+brightness range matches a tan/beige background wall visible in several
+images almost exactly, and the broadened ranges generally pick up far
+more soil/bark/dead-leaf clutter than the hand-picked synthetic test
+colours anticipated. **Reverted** — `use_shadow_variant` and
+`use_highlight_variant` now default to `False` in `ClassicalConfig`, and
+`baseline-colour-v1`'s numbers above are back to the single-colour
+result. The variant code itself is kept in `src/classical.py` (tested,
+not deleted) rather than thrown away, in case someone wants to retighten
+the thresholds against real images instead of guessed colours, or add
+the toggles to the grid search so it's chosen empirically rather than
+assumed. Recorded here and in `EXPERIMENTS.md` because a negative result
+investigated properly is still a real finding worth keeping, not
+something to quietly undo and forget (rule 9).
+
 ## Reproducibility
 
 Tagged `baseline-colour-v1`. Logged in `EXPERIMENTS.md` (narrative) and
