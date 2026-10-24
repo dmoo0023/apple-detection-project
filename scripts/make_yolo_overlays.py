@@ -2,7 +2,7 @@
 green=detection style as Stage 6's classical-baseline overlays, for
 direct visual comparison between methods.
 
-Run with: .venv\\Scripts\\python.exe scripts\\make_yolo_overlays.py [--run-id ID] [-n N]
+Run with: .venv\\Scripts\\python.exe scripts\\make_yolo_overlays.py [--run-id ID] [-n N] [--iou IOU]
 """
 
 import argparse
@@ -23,6 +23,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", default="model-v1-first-fit")
     parser.add_argument("-n", type=int, default=5)
+    parser.add_argument("--iou", type=float, default=0.7, help="NMS IoU threshold (default 0.7 matches training-time val)")
     args = parser.parse_args()
 
     weights = REPO_ROOT / "runs" / "yolo" / args.run_id / "weights" / "best.pt"
@@ -33,9 +34,10 @@ def main() -> int:
 
     apples_df = pd.read_csv(load_paths()["derived_dir"] / "apples_2d.csv")
 
-    # one subfolder per run_id, so overlays from different models/label-counts
-    # never overwrite each other -- all versions stay available side by side.
-    out_dir = REPO_ROOT / "data" / "derived" / "stage8_overlays" / args.run_id
+    # one subfolder per run_id (and per NMS IoU threshold, if not the default),
+    # so overlays from different models/settings never overwrite each other.
+    folder_name = args.run_id if args.iou == 0.7 else f"{args.run_id}_iou{args.iou}"
+    out_dir = REPO_ROOT / "data" / "derived" / "stage8_overlays" / folder_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
     for image_id in val_ids:
@@ -46,7 +48,7 @@ def main() -> int:
         for row in gt.itertuples():
             cv2.circle(img, (int(row.cx), int(row.cy)), int(row.radius_px), (0, 0, 255), 2)
 
-        pred = model.predict(str(img_path), verbose=False, device=0)[0]
+        pred = model.predict(str(img_path), verbose=False, device=0, iou=args.iou)[0]
         for box in pred.boxes:
             x0, y0, x1, y1 = box.xyxy[0].tolist()
             cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
