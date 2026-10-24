@@ -23,7 +23,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", default="model-v1-first-fit")
     parser.add_argument("-n", type=int, default=5)
-    parser.add_argument("--iou", type=float, default=0.7, help="NMS IoU threshold (default 0.7 matches training-time val)")
+    parser.add_argument("--iou", type=float, default=0.3,
+                         help="NMS IoU threshold (default 0.3, the standing default since the stage-8 "
+                              "over-counting investigation -- see docs/stage-8-notes.md)")
     args = parser.parse_args()
 
     weights = REPO_ROOT / "runs" / "yolo" / args.run_id / "weights" / "best.pt"
@@ -36,7 +38,7 @@ def main() -> int:
 
     # one subfolder per run_id (and per NMS IoU threshold, if not the default),
     # so overlays from different models/settings never overwrite each other.
-    folder_name = args.run_id if args.iou == 0.7 else f"{args.run_id}_iou{args.iou}"
+    folder_name = args.run_id if args.iou == 0.3 else f"{args.run_id}_iou{args.iou}"
     out_dir = REPO_ROOT / "data" / "derived" / "stage8_overlays" / folder_name
     out_dir.mkdir(parents=True, exist_ok=True)
 

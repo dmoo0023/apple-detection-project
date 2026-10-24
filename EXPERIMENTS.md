@@ -204,3 +204,40 @@ an artifact of unbounded cross-entropy loss values, not genuinely
 worsening model behaviour. Full writeup: `docs/stage-8-notes.md`.
 
 **Tag:** none yet.
+
+## NMS IoU threshold tightened (0.7 -> 0.3) — applied to all 3 YOLO runs
+
+**Date:** 2026-10-24 (same day)
+**What:** Student asked whether a loss-function overlap penalty would help
+the over-counting problem. Investigated and found YOLO already has that
+mechanism — NMS (non-max suppression), which discards a predicted box that
+overlaps a higher-confidence box by more than a threshold. Ultralytics'
+default (0.7) is loose enough that near-duplicate boxes on the same apple
+both survive. Tightening to 0.3 (pure prediction-time setting, no
+retraining) cut `model-v1-31train`'s count MAE from 6.00 to 2.60 with F1
+unchanged or slightly better. Made the standing default in
+`scripts/train_yolo.py` and `scripts/make_yolo_overlays.py`.
+
+**Re-evaluated all 3 logged runs with it, for a clean comparison:**
+
+| Run | Train images | F1 | mAP@0.5 | Count MAE (was, iou=0.7) | Count MAE (now, iou=0.3) |
+|---|---|---|---|---|---|
+| `model-v1-first-fit` | 10 | 0.767 | 0.744 | 7.00 | 3.25 |
+| `model-v1-20train` | 20 | 0.785 | 0.780 | 4.20 | 3.00 |
+| `model-v1-31train` | 31 | 0.779 | 0.811 | 6.00 | 2.60 |
+
+**This substantially resolves the "non-monotonic count regression"
+reported in the `model-v1-31train` entry above.** With the NMS fix
+applied consistently, count MAE is now monotonically improving
+(3.25 → 3.00 → 2.60) rather than dipping and bouncing back — the earlier
+"regression" was largely an evaluation-side artifact (inconsistent
+over-counting severity across runs), not a genuine step backwards in the
+model. Old (iou=0.7) results/overlays kept, not deleted, in
+`*_iou0.7`-suffixed files — see `docs/stage-8-notes.md` for the full
+writeup, including the updated classical-vs-YOLO table (YOLO now wins on
+every metric, including count accuracy, which it previously didn't).
+
+Fixed a related bug while doing this: `scripts/plot_learning_curve.py`
+used `drop_duplicates(keep="first")`, which would have kept each run's
+*original* (stale, pre-fix) logged metrics instead of the re-evaluated
+ones. Changed to `keep="last"`.

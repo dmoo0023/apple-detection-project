@@ -55,6 +55,11 @@ def main() -> int:
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--model", default="yolov8n.pt")
     parser.add_argument("--batch", type=int, default=4)
+    parser.add_argument("--iou", type=float, default=0.3,
+                         help="NMS IoU threshold for val-time prediction (default 0.3, tightened from "
+                              "Ultralytics' 0.7 default -- see docs/stage-8-notes.md: the looser default let "
+                              "near-duplicate overlapping boxes on the same apple survive, inflating count MAE "
+                              "from 6.00 to 2.60 at no F1 cost when tightened)")
     args = parser.parse_args()
 
     data_yaml = REPO_ROOT / "configs" / "yolo_data.yaml"
@@ -92,7 +97,7 @@ def main() -> int:
 
     pred_val, depth_lookup = [], {}
     for image_id in val_ids:
-        pred = val_yolo.predict(str(val_dir / f"{image_id}.png"), verbose=False, device=0)[0]
+        pred = val_yolo.predict(str(val_dir / f"{image_id}.png"), verbose=False, device=0, iou=args.iou)[0]
         for box in pred.boxes:
             x0, y0, x1, y1 = box.xyxy[0].tolist()
             cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
@@ -118,8 +123,10 @@ def main() -> int:
         stage="stage-8",
         seed=SEED,
         config={"model": args.model, "epochs": args.epochs, "batch": args.batch, "imgsz": 640,
+                "nms_iou": args.iou,
                 "n_train_images": len(list((REPO_ROOT / "data/derived/yolo_dataset/images/train").glob("*.png")))},
-        metrics_summary=f"val P={det['precision']:.3f} R={det['recall']:.3f} F1={det['f1']:.3f} mAP={det['mAP@0.5']:.3f}",
+        metrics_summary=f"val P={det['precision']:.3f} R={det['recall']:.3f} F1={det['f1']:.3f} mAP={det['mAP@0.5']:.3f} "
+                         f"countMAE={summary['counting']['count_mae']:.2f} countBias={summary['counting']['count_bias']:+.2f}",
     ))
 
     print(f"\n## Exit check: training run complete, weights at {best_weights}, "

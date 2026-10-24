@@ -299,3 +299,29 @@ not a bug, not currently worth more investigation at this scale. 45/45
 tests pass (unchanged).
 
 **Student review notes:**
+
+## NMS IoU threshold fix (over-counting) — 2026-10-24
+
+**Asked:** Would adding an overlap penalty to the loss function help the
+over-counting problem? Then: go ahead and generate overlays, explain NMS,
+then "yes" to making the fix standing default.
+
+**Produced:** Found YOLO already has this mechanism (NMS), just set
+loosely (IoU 0.7 default). Verified empirically that tightening to 0.3
+cuts count MAE from 6.00 to 2.60 on the latest run with no F1 cost, before
+recommending it (not just asserted). Made `--iou 0.3` the default in
+`scripts/train_yolo.py` and `scripts/make_yolo_overlays.py`. Re-evaluated
+all 3 logged YOLO runs with the new default, keeping the old (iou=0.7)
+results/overlays in `*_iou0.7`-suffixed files/folders rather than
+discarding them. This substantially resolved the "non-monotonic count
+regression" flagged in the previous entry — with the fix applied
+consistently, count MAE is now monotonically improving across all 3 runs,
+and YOLO now beats classical on every metric including count accuracy
+(previously classical's one advantage). Fixed a real bug found along the
+way: `plot_learning_curve.py`'s `drop_duplicates(keep="first")` would have
+kept each run's stale pre-fix metrics instead of the re-evaluated ones —
+changed to `keep="last"`. Updated `docs/stage-8-notes.md` and
+`EXPERIMENTS.md` with corrected tables rather than leaving the old
+numbers standing. 45/45 tests pass (unchanged).
+
+**Student review notes:**

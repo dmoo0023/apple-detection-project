@@ -57,7 +57,9 @@ def main() -> int:
         print("No stage-8 runs with n_train_images found in runs/experiments.csv yet.")
         return 1
 
-    curve_df = pd.DataFrame(rows).drop_duplicates(subset="run_id").sort_values("n_train_images")
+    # keep="last": a run_id can be logged more than once (e.g. re-evaluated after an
+    # evaluation-side fix like the NMS IoU threshold change) -- the latest entry wins.
+    curve_df = pd.DataFrame(rows).drop_duplicates(subset="run_id", keep="last").sort_values("n_train_images")
     out_csv = REPO_ROOT / "results" / "learning_curve.csv"
     curve_df.to_csv(out_csv, index=False)
     print(curve_df.to_string(index=False))
