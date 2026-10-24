@@ -1,0 +1,29 @@
+# Camera intrinsics and depth scale for the Intel RealSense D435i colour
+# stream at 640x480 (depth is pre-aligned to colour, per the project brief,
+# so the colour intrinsics apply to both images).
+#
+# STATUS: INCOMPLETE. See docs/stage-1-notes.md and checkpoint C1 — these
+# values were not found anywhere in the dataset or project folder and must
+# not be guessed (rule 2). Do not use this file until it is filled in.
+
+image_width: 640
+image_height: 480
+
+# Focal lengths and principal point, in pixels. NOT FOUND. These are specific
+# to this exact camera unit and the resolution/FOV mode it was streaming in;
+# the D435i factory defaults vary per unit and per firmware, so a generic
+# "typical D435i" number would not be trustworthy for a 2-3 cm accuracy
+# target.
+fx: null
+fy: null
+cx: null
+cy: null
+
+# Depth scale: multiply a raw depth pixel value by this to get metres.
+# NOT FOUND, and more seriously: the depth PNGs on disk are 8-bit
+# (0-255), 3-channel images with per-image max values around 155-180, not
+# the 16-bit single-channel PNGs the brief expected. An 8-bit image of this
+# kind is almost always a *normalised visualisation* of depth (min/max
+# stretched per image for display), not metric depth — see stage-1 notes.
+# Do not set a scale here until the real depth source is confirmed.
+depth_scale_to_metres: null
