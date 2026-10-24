@@ -199,3 +199,43 @@ def parse_yolo_segmentation_line(line: str, img_w: int, img_h: int) -> tuple[flo
     cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
     radius = sum(math.hypot(x - cx, y - cy) for x, y in zip(xs, ys)) / len(xs)
     return cx, cy, radius
+
+
+# --- Stage 7: write detector output as labelme-compatible circles for review ---
+
+def apples_to_labelme_dict(image_filename: str, apples: list[tuple[float, float, float]],
+                            img_w: int, img_h: int, label: str = "Apple") -> dict:
+    """Build a labelme-format dict (same structure load_labelme reads) from a list
+    of (cx, cy, radius) detections, for a human to open in labelme and correct.
+
+    This is PRE-labelling output, not a ground-truth label: it goes in a
+    separate review folder (never the raw data root, rule 1), and a human
+    must open, correct and move it before it counts as a real label.
+    """
+    shapes = []
+    for cx, cy, r in apples:
+        shapes.append({
+            "label": label,
+            "points": [[cx, cy], [cx + r, cy]],
+            "group_id": None,
+            "description": "",
+            "shape_type": "circle",
+            "flags": {},
+            "mask": None,
+        })
+    return {
+        "version": "5.0.0",
+        "flags": {},
+        "shapes": shapes,
+        "imagePath": image_filename,
+        "imageData": None,
+        "imageHeight": img_h,
+        "imageWidth": img_w,
+    }
+
+
+def write_labelme_json(json_path: Path, image_filename: str, apples: list[tuple[float, float, float]],
+                        img_w: int, img_h: int) -> None:
+    data = apples_to_labelme_dict(image_filename, apples, img_w, img_h)
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)

@@ -1,0 +1,208 @@
+{
+  "version": "5.0.0",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "Apple",
+      "points": [
+        [
+          9.279854320634085,
+          14.284745314470047
+        ],
+        [
+          14.566552572270503,
+          14.284745314470047
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          161.45219422373825,
+          43.316500612207676
+        ],
+        [
+          166.60751027610513,
+          43.316500612207676
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          599.6096123078966,
+          70.13837542143715
+        ],
+        [
+          607.5977509652585,
+          70.13837542143715
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          72.85805949834717,
+          98.66046082053309
+        ],
+        [
+          76.00038429149745,
+          98.66046082053309
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          208.3767314332083,
+          179.07542535860293
+        ],
+        [
+          219.59568953714222,
+          179.07542535860293
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          51.514629674830715,
+          196.5614697695461
+        ],
+        [
+          62.84404788435707,
+          196.5614697695461
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          235.7541691556055,
+          241.26786863247852
+        ],
+        [
+          239.82981948154008,
+          241.26786863247852
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          433.32790509370176,
+          247.37775000887103
+        ],
+        [
+          437.91344688469167,
+          247.37775000887103
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          374.8362031619683,
+          249.63511099189284
+        ],
+        [
+          380.9124207881573,
+          249.63511099189284
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          632.6620528979777,
+          362.1959733128022
+        ],
+        [
+          640.3558418976792,
+          362.1959733128022
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Apple",
+      "points": [
+        [
+          610.0769821301583,
+          400.04067603626385
+        ],
+        [
+          617.4430181755919,
+          400.04067603626385
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "circle",
+      "flags": {},
+      "mask": null
+    }
+  ],
+  "imagePath": "R03U20_Summer_RGB-12-59-54.png",
+  "imageData": null,
+  "imageHeight": 480,
+  "imageWidth": 640
+}

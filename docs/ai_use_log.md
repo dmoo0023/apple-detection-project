@@ -166,3 +166,18 @@ depths outside every named band were silently dropped instead of reported
 as "out_of_range") — added a regression test. 41/41 project tests pass.
 
 **Student review notes:**
+
+## Stage 7: Pre-labelling loop — 2026-10-24
+
+**Asked:** Use the current best detector to pre-label unlabelled train
+images as labelme-compatible circle JSON in a separate folder, tell the
+student which to review, and wait.
+
+**Produced:** `write_labelme_json()` in `src/labels.py` (round-trip
+tested), `scripts/pre_label.py`, 50 pre-label JSON files in
+`data/derived/prelabels/` (first batch, of 376 unlabelled train images),
+`docs/stage-7-notes.md`. 42/42 project tests pass. **Waiting on the
+student** to review/correct these in labelme and copy them into the real
+dataset folder before any further label-dependent work continues.
+
+**Student review notes:**
