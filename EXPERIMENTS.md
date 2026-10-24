@@ -482,3 +482,24 @@ mAP both > 0.75). One apple (`R04U13`) had no usable depth sample;
 correctly reported as `None`/unknown rather than fabricated. Full
 reasoning in `docs/stage-9-notes.md`. **No tuning after this result, per
 the brief.** Tagged `final-test-eval`.
+
+## Stage 10: full inference, all 544 trees
+
+**Date:** 2026-10-24 (same day)
+**What:** `scripts/run_pipeline.py` run with `--all` — the chosen method
+(`model-v1`) over every tree, not just the labelled subset.
+`scripts/stage10_summary.py` and `scripts/stage10_point_clouds.py` for
+the required summary/histograms and 5 example-tree deliverables.
+
+**Result:** 19,294 apples across all 544 trees (0-94 per tree, median
+36). 0.7% of detections had no usable depth, correctly flagged rather
+than fabricated. **100% of valid Z values fall below the dataset's
+stated 0.4m minimum** — the checkpoint-C1 limitation, now visible across
+the whole dataset. A real bug caught while building the summary script:
+a plain `groupby` on tree_id silently drops any tree with zero
+detections from the "apples per tree" count — fixed by reindexing against
+the full manifest, surfacing one such tree (`R10U14`) explicitly rather
+than undercounting "trees processed" by one. That tree was deliberately
+kept as one of the 5 example trees (checked by eye: genuinely no visible
+apples) rather than swapped for a cleaner-looking example. Full writeup:
+`docs/stage-10-notes.md`. Tagging `stage-10-done`.
