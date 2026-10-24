@@ -321,3 +321,124 @@ changed" comparison here (unlike the 31-image dip, which was isolated to
 an NMS artifact). Worth checking again once val holds steady.
 
 **Tag:** none yet.
+
+## Stage 8 experiment series (exp-01 through exp-07) — Stage 8 exit check complete
+
+**Date:** 2026-10-24 (same day)
+**Baseline for every experiment below:** `model-v1-40train` (yolov8n.pt,
+pretrained, batch=8, epochs=100, lr0=0.01, no cosine schedule, mosaic=1.0),
+re-evaluated first on a val set grown to 26 images (one more label arrived,
+R09U03) so every comparison below uses a consistent val set: **F1=0.812,
+mAP@0.5=0.830, count MAE=2.96**. Each experiment changes exactly one
+thing from this baseline (rule 5), on its own branch (`exp/01-...` through
+`exp/07-...`), kept unmerged since none became the new standing default
+(rule: merge only if it becomes the new baseline). Full run artifacts
+(weights-excluded logs/plots/configs) are on those branches; summarised
+here.
+
+| # | Change | F1 | mAP@0.5 | Count MAE | Verdict |
+|---|---|---|---|---|---|
+| — | baseline | 0.812 | 0.830 | 2.96 | — |
+| 01 | model size: yolov8s vs yolov8n | 0.813 | 0.826 | 2.85 | no meaningful difference |
+| 02 | random init vs pretrained | 0.724 | 0.656 | 4.04 | pretrained clearly wins |
+| 03 | lr0=0.001 + cosine schedule | 0.801 | 0.824 | 3.42 | slightly worse, keep default |
+| 04 | batch=16, epochs=150 | 0.814 | 0.801 | 2.73 | mixed (F1 ties, mAP worse) |
+| 05 | mosaic augmentation off | 0.818 | 0.800 | 2.62 | mixed (F1 up, mAP worse) |
+| 06 | segmentation vs detection | 0.675 | 0.654 | 2.12 | mask-centroid centre worse than box-centre |
+
+**exp-01 (model size):** yolov8s has ~3.5x yolov8n's parameters; no payoff
+at 40 train images — more capacity needs more data to show benefit. Keep
+nano: same performance, smaller, faster.
+
+**exp-02 (pretrained vs random init):** the clearest result in the whole
+series. Random-initialised weights lose on every metric, confirming
+COCO pretraining is doing real work transferring general visual features
+to this tiny dataset — not a close call.
+
+**exp-03 (LR/schedule):** a lower LR with cosine decay converges more
+cautiously; on only 100 epochs and 40 images, that caution cost accuracy
+rather than helping it. Ultralytics' defaults (tuned on large datasets,
+admittedly not this one) still won here.
+
+**exp-04 (batch/epochs) and exp-05 (augmentation):** grouped in this
+summary because they produced the *same pattern* independently — F1 ticks
+up, count MAE improves, but mAP@0.5 drops, and precision rises while
+recall falls (the model gets more conservative: fewer false positives,
+more misses). Seeing this pattern twice from two unrelated changes
+suggests it may be a general property of training on this small a dataset
+(e.g. less exposure to hard/varied examples per epoch), not a coincidence
+specific to either change — worth retesting once the dataset is bigger.
+Neither counts as a clean win given mAP (the standard detection metric)
+got worse both times.
+
+**exp-06 (boxes vs segmentation):** answers the brief's specific
+"compare centre accuracy" question directly. Ultralytics' own box metrics
+for the segmentation model (mAP50=0.884) show its underlying detection
+quality is fine, comparable to the box-only baseline — the problem is
+specifically the **mask-to-circle conversion**: centroid of a predicted
+mask polygon is a worse centre estimate than a box's centre (2D error
+3.16px vs 1.78px) when the visible apple shape is irregular, as it often
+is under leaf occlusion. **Finding: use box-based detection for centre
+position, not segmentation**, at least with this simple centroid
+conversion — a smarter mask-to-circle method (e.g. a circle fit to the
+mask contour, matching the classical pipeline's own technique) might close
+this gap and would be worth trying if segmentation is revisited.
+
+## exp-07: seed repeats (Stage 8 item 4)
+
+Per the brief, repeated the best two configurations across 3 seeds each
+(42, 123, 7) and compared mean ± std, rather than trusting single runs:
+
+| Config | F1 (mean±std) | mAP@0.5 (mean±std) | Count MAE (mean±std) |
+|---|---|---|---|
+| baseline (mosaic on) | 0.810 ± 0.006 | 0.820 ± 0.017 | 2.80 ± 0.46 |
+| no-mosaic | 0.823 ± 0.008 | 0.802 ± 0.004 | 2.72 ± 0.21 |
+
+**Genuinely nuanced, reported as such rather than forced into a winner:**
+no-mosaic has a modest, fairly consistent F1 edge (difference > either
+std) and a *more stable* mAP (lower variance) — but baseline's *mean* mAP
+is still higher. Baseline's own mAP varies a lot across seeds (one seed
+scored 0.801, another 0.832), which on its own is worth knowing: a single
+baseline run could look better or worse than it "typically" is just from
+seed luck. **Decision: keep `mosaic=1.0` (the baseline) as the standing
+config**, since mAP@0.5 is the more standard detection metric and its
+mean is still ahead — but this is a closer call than any single-seed
+comparison suggested, and documented as such rather than overstated.
+
+## Error analysis (Stage 8 item 6)
+
+`scripts/error_analysis.py` on `model-v1-40train`'s val predictions:
+**120 false negatives, 175 false positives** across 25 of 26 val images
+(overlays in `data/derived/error_analysis/model-v1-40train/`). False
+positives' confidence scores are mostly low-to-moderate (mean 0.44, median
+0.43, max 0.78) — none are confidently wrong, suggesting a higher
+confidence threshold at inference time would trade some recall for
+meaningfully fewer false positives, a cheap lever not yet tried.
+
+Grouped by cause, from inspecting the overlays:
+- **Clustered/touching apples (false negatives)** — the dominant missed-
+  detection pattern. Where multiple apples overlap or sit very close
+  together, the model often finds only one of the group or none at all.
+- **Background structures (false positives)** — a tan/beige background
+  wall, visible in several images, occasionally gets detected as an apple
+  (same root cause as the classical baseline's worse version of this
+  problem, just far less frequent here).
+- **Ground-level false positives** — a handful of detections in grass/soil
+  near the tree base, most plausibly fallen (unlabelled) apples, same
+  pattern noted for the classical baseline.
+- **Distant background rows (false positives)** — a failure mode not seen
+  in the classical baseline's overlays: out-of-focus apple-like colour in
+  a different orchard row visible far behind the main tree, occasionally
+  triggers a detection.
+
+## Stage 8 exit check: COMPLETE
+
+Logged experiments (6 one-change comparisons + seed repeats, this file
+and `runs/experiments.csv`), the learning-curve plot (4 points,
+`results/learning_curve.png`), best configuration with seed spread (above),
+and error analysis (above) are all done. **Standing best configuration:
+`model-v1-40train`'s settings** (yolov8n.pt, pretrained, batch=8,
+epochs=100, default LR/schedule/augmentation) — no experiment in the
+series beat it convincingly enough to replace it, and the ones that came
+close involve real tradeoffs (precision vs recall, F1 vs mAP) rather than
+a clean win. Tagging `model-v1` and `stage-8-done`.

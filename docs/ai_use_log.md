@@ -371,3 +371,36 @@ negative result in `docs/stage-6-notes.md` and `EXPERIMENTS.md` rather
 than quietly undone, per rule 9. 50/50 tests pass.
 
 **Student review notes:**
+
+## Stage 8 completion: full experiment series, seed repeats, error analysis — 2026-10-24
+
+**Asked:** "Continue with the stages" — proceeded autonomously through
+Stage 8's remaining exit-check items (one branch per experiment, per the
+git convention), since the workflow only requires stopping at checkpoints
+C1-C4, none of which apply here.
+
+**Produced:** Picked up and validated 9 more labels first (row 4/test to
+20/31; one more val label). Rebuilt the YOLO dataset and re-evaluated the
+standing baseline on the now-26-image val set for a consistent series.
+Extended `scripts/train_yolo.py` with `--seed/--lr0/--cos-lr/--mosaic`.
+Ran 6 one-change experiments against the baseline (model size, pretrained
+vs. random init, LR/schedule, batch/epochs, augmentation, boxes vs.
+segmentation — the last needed new scaffolding,
+`scripts/prepare_yolo_seg_dataset.py` + `scripts/train_yolo_seg.py`, to
+answer the brief's specific "compare centre accuracy" question), each on
+its own `exp/0N-...` branch, merged only if it beat the baseline (none
+did outright). Caught and fixed a real gitignore gap along the way (the
+new segmentation dataset's image copies and Ultralytics cache files were
+about to get committed — excluded them, same treatment as the existing
+detection dataset). Ran seed repeats (3 seeds each) on the two most
+promising configs, reporting a genuinely nuanced result rather than
+forcing a winner. Built `scripts/error_analysis.py` and ran it on the
+standing best model: 120 FN / 175 FP, grouped by cause from inspecting
+the saved overlays (clustered apples dominate misses; background
+structures, fallen fruit, and out-of-focus background rows dominate false
+positives). All four Stage 8 exit-check items now complete — tagged
+`model-v1` and `stage-8-done`. Full numbers and reasoning in
+`EXPERIMENTS.md`; plain-language summary in `docs/stage-8-notes.md`.
+50/50 tests pass throughout.
+
+**Student review notes:**

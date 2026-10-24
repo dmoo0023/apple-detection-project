@@ -4,13 +4,13 @@ Detects apples in RGB-D images of orchard trees and estimates each
 apple's 3D position, for an automated picking application. Built
 following `agent_workflow.md`, the project brief this repo implements.
 
-**Status: in progress (Stage 8 of 10).** Stages 0-7 are complete and
-tagged. Stage 8 (model training) has an active learning curve with 4
-points logged so far and more to come as labelling continues. Stages 9
-(final test evaluation) and 10 (full inference + deliverables) have not
-started. See [Project status](#project-status) below for exactly what's
-done, and [`docs/limitations.md`](docs/limitations.md) for what isn't
-resolved yet.
+**Status: Stages 0-8 of 10 complete.** Stage 8 (model training: learning
+curve, experiment series, seed repeats, error analysis) is done and
+tagged (`stage-8-done`, `model-v1`). Stages 9 (final test evaluation,
+gated on checkpoint C3 — the student confirming the chosen method) and 10
+(full inference + deliverables) have not started. See
+[Current results](#current-results) below for where things stand, and
+[`docs/limitations.md`](docs/limitations.md) for what isn't resolved yet.
 
 ## Setup
 
@@ -103,22 +103,28 @@ re-tune the classical baseline on the current labels.
 
 ## Current results
 
-Two methods compared on the same val split through the one shared
-evaluation module (`src/evaluate.py`), at 77 labelled images (40 train /
-25 val / 12 test):
+**Stage 8 exit check is complete**: logged experiments, learning curve,
+best config with seed spread, and error analysis are all done (tagged
+`model-v1`, `stage-8-done`). Two methods compared on the same val split
+through the one shared evaluation module (`src/evaluate.py`), at 86
+labelled images (40 train / 26 val / 20 test):
 
-| | Classical (`baseline-colour-v1`) | YOLO (`model-v1-40train`) |
+| | Classical (`baseline-colour-v1`) | YOLO (`model-v1-40train`, standing best) |
 |---|---|---|
-| F1 | 0.560 | **0.813** |
-| mAP@0.5 | 0.200 | **0.827** |
-| Count MAE (apples/image) | 5.00 | **3.00** |
+| F1 | 0.560 | **0.812** |
+| mAP@0.5 | 0.200 | **0.830** |
+| Count MAE (apples/image) | 5.00 | **2.96** |
 
-Full tables in `results/`; the narrative behind every number (including
-a tried-and-reverted experiment and a corrected mistake or two) is in
-`EXPERIMENTS.md` and `docs/stage-6-notes.md` / `docs/stage-8-notes.md`.
-The learning curve (`results/learning_curve.png`) has 4 points so far and
-is still rising — not yet plateaued, and no seed-repeat runs have been
-done, so read these numbers as "the trend so far," not a final answer.
+YOLO's config was chosen against a 6-way one-change experiment series
+(model size, pretrained-vs-random, LR/schedule, batch/epochs,
+augmentation, boxes-vs-segmentation) and seed-repeat testing on the two
+closest contenders — none beat it convincingly, and the margin against
+the runner-up is honestly reported as close rather than overstated. Full
+tables in `results/`; the complete narrative (including a tried-and-
+reverted experiment, two corrected mistakes, and the error analysis) is
+in `EXPERIMENTS.md` and `docs/stage-6-notes.md` / `docs/stage-8-notes.md`.
+Stages 9 (final test evaluation) and 10 (full inference + deliverables)
+have not started.
 
 ## Known limitations
 
