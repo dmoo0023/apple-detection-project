@@ -55,6 +55,21 @@ orchard rows means some of this apparent strength could be domain
 similarity rather than a method that will hold up as more, visually
 different rows get labelled).
 
+## A training-curve wobble worth noting
+
+`runs/yolo/model-v1-first-fit/results.png` shows a sharp transient spike
+around epoch ~30 (val/cls_loss briefly exceeds 100; precision/recall/mAP
+dip at the same point), before recovering and climbing steadily to the
+final values. Most likely explanation: batch size 4 with only 20
+validation images means very few validation batches per epoch, so one
+unusual batch can swing the aggregate loss a lot. `best.pt` (used for the
+results above) is selected by tracking fitness across all epochs, and
+training clearly recovers and keeps improving afterward — not treated as a
+problem, but flagged here rather than left as an unexplained blip in a
+plot nobody commented on. Worth watching whether it recurs, shrinks, or
+disappears once retraining happens with more labelled images (bigger,
+more stable batches).
+
 ## Why YOLO's own printed metrics differ slightly from ours
 
 During training, Ultralytics prints its own mAP50 (0.805) — close to, but
