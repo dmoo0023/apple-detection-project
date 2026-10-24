@@ -1,8 +1,8 @@
 # Stage 2 label conversion report
 
-Found 40 labelme JSON files.
+Found 61 labelme JSON files.
 
-Converted 40 images, 1297 apples total.
+Converted 61 images, 1976 apples total.
 Wrote data\derived\apples_2d.csv
 Wrote YOLO detection labels to data\derived\labels_det/
 Wrote YOLO segmentation labels to data\derived\labels_seg/
