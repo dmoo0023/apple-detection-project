@@ -404,3 +404,20 @@ positives). All four Stage 8 exit-check items now complete — tagged
 50/50 tests pass throughout.
 
 **Student review notes:**
+
+## Stage 9: decision table, checkpoint C3 confirmed — 2026-10-24
+
+**Asked:** "Yes, confirm YOLO, proceed to Stage 9."
+
+**Produced:** `scripts/stage9_decision_table.py`, `docs/stage-9-notes.md`,
+`results/stage9_decision_table.{csv,md}` — classical vs YOLO on val
+(never test), same evaluation code, plus speed and robustness. YOLO wins
+every accuracy metric by a wide margin (F1 0.812 vs 0.548, mAP 0.830 vs
+0.204); classical's only edge is a small speed advantage. Declined to
+build a hybrid method, reasoning explicitly: exp-06 already answered the
+closest related question (box-centre beats mask-centroid), and YOLO's
+lead is wide enough that a hybrid's only plausible upside isn't worth the
+complexity here. Checkpoint C3 resolved. Proceeding to the one-time
+locked test evaluation next.
+
+**Student review notes:**

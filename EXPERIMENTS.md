@@ -442,3 +442,22 @@ epochs=100, default LR/schedule/augmentation) — no experiment in the
 series beat it convincingly enough to replace it, and the ones that came
 close involve real tradeoffs (precision vs recall, F1 vs mAP) rather than
 a clean win. Tagging `model-v1` and `stage-8-done`.
+
+## Stage 9 decision table — checkpoint C3
+
+**Date:** 2026-10-24 (same day)
+**What:** Classical vs YOLO on val, identical evaluation code, plus speed
+and robustness (`scripts/stage9_decision_table.py`, `docs/stage-9-notes.md`).
+
+| Method | F1 | mAP@0.5 | sec/image |
+|---|---|---|---|
+| Classical | 0.548 | 0.204 | 0.021 |
+| YOLO (`model-v1`) | **0.812** | **0.830** | 0.055 |
+
+Not a close call on accuracy; classical's only edge is a small absolute
+speed advantage, both fast enough in practice. A hybrid (detector box +
+classical circle fit) was considered and declined — exp-06 already found
+box-centre beats mask-centroid under occlusion, and YOLO's accuracy lead
+is wide enough that a hybrid's only plausible benefit (speed) isn't worth
+the added complexity here. **Checkpoint C3: student confirmed YOLO.**
+Proceeding to the one-time locked test evaluation.
