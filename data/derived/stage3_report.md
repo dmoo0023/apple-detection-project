@@ -8,7 +8,7 @@ Wrote configs\splits.json (seed=42).
 - test: rows [4, 21]
 
 ## Counts per split
-- **train**: 383 trees (70.4%), 5 labelled
+- **train**: 383 trees (70.4%), 7 labelled
 - **val**: 84 trees (15.4%), 20 labelled
 - **test**: 77 trees (14.2%), 0 labelled
 

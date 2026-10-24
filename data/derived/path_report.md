@@ -4,7 +4,7 @@
 - `raw_data_root` = `C:\Users\melbo\OneDrive - Monash University\Documents\01_Monash\MMA3001\Apple Detection Project\Dataset (Summer Only)` -> OK, exists and is a directory
 - `rgb_dir` = `C:\Users\melbo\OneDrive - Monash University\Documents\01_Monash\MMA3001\Apple Detection Project\Dataset (Summer Only)\RGB` -> OK, exists and is a directory
 - `depth_dir` = `C:\Users\melbo\OneDrive - Monash University\Documents\01_Monash\MMA3001\Apple Detection Project\Dataset (Summer Only)\D` -> OK, exists and is a directory
-- RGB folder: 544 .png files, 25 .json files
+- RGB folder: 544 .png files, 27 .json files
 - Depth folder: 544 .png files
 - OneDrive cloud-only placeholders found: 0
 
@@ -44,9 +44,9 @@
 **FINDING: every depth PNG is 8-bit, 3-channel (R=G=B), not 16-bit single-channel. This cannot be the raw RealSense depth stream — it looks like a normalised visualisation (min/max stretched per image for display). Per-image max values range roughly 155-180 (checked on a sample), which does not correspond to a fixed physical depth scale. See checkpoint C1: this must be resolved with the student before any 3D geometry work can start.**
 
 ## 8. Labelme JSON checks
-- labelme JSON files checked: 25
+- labelme JSON files checked: 27
 - files with problems: 0
-- total apple circles across all 25 labelled images: 781
+- total apple circles across all 25 labelled images: 813
 
 ## 9. Depth sanity
 - median centre-patch raw value over 542 images: 144.0 (range 116-173, raw 0-255 units)

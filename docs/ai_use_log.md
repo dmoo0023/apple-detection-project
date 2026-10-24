@@ -100,3 +100,21 @@ consequence of the checkpoint-C1 depth-scale limitation: the computed
 apple radius (4.8mm) is not physically realistic.
 
 **Student review notes:**
+
+## Stage 5: Evaluation module — 2026-10-24
+
+**Asked:** Build `src/evaluate.py` (Hungarian matching, precision/recall/
+F1, mAP@0.5, 2D and 3D-proxy error, distance-band breakdown, CSV/markdown
+output), with the module's own exit check: a trivial predictor (the labels
+themselves) must score perfectly, and a deliberately shifted copy must
+give a specific, predictable error.
+
+**Produced:** `src/evaluate.py`, `tests/test_evaluate.py` (5 tests, all
+passing), `docs/stage-5-notes.md`. Mid-stage, noticed the student had
+labelled 2 more images (27 total now, was 25) — validated them, re-ran
+Stage 1/2's generation scripts to pick them up, confirmed `splits.json`
+regenerates byte-identical (row structure unchanged), and loosened a
+hard-coded "25 images / 781 apples" test assertion to check against
+whatever's currently labelled instead. 34/34 project tests pass.
+
+**Student review notes:**

@@ -102,9 +102,9 @@ def main() -> int:
 
     (derived_dir / "stage2_report.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
 
-    exit_ok = len(json_files) == 25 and len(apples_df) > 0
+    exit_ok = len(json_files) >= 25 and len(apples_df) > 0
     log(f"\n## Exit check: {'PASS' if exit_ok else 'ISSUES FOUND'} "
-        f"({len(json_files)}/25 labelled images converted)")
+        f"({len(json_files)} labelled images converted, >= the 25 from Stage 1)")
     return 0 if exit_ok else 1
 
 
