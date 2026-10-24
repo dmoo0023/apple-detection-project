@@ -2,3 +2,4 @@ precision,recall,f1,map50,n_train_images,run_id,count_mae
 0.754,0.781,0.767,0.744,10,model-v1-first-fit,3.25
 0.777,0.794,0.785,0.78,20,model-v1-20train,3.0
 0.757,0.802,0.779,0.811,31,model-v1-31train,2.6
+0.785,0.844,0.813,0.827,40,model-v1-40train,3.0

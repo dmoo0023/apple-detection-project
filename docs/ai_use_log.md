@@ -325,3 +325,26 @@ changed to `keep="last"`. Updated `docs/stage-8-notes.md` and
 numbers standing. 45/45 tests pass (unchanged).
 
 **Student review notes:**
+
+## Stage 8: fourth YOLO fit, deliberate row diversity — 2026-10-24
+
+**Asked:** Student asked for labelling-strategy advice (3-4 images per
+row across many rows vs. deep in few), then added 16 more labels spread
+across 6 new rows and said "I have added some more."
+
+**Produced:** Validated all 16, refreshed manifest/conversion artifacts
+(77 total: 40 train / 25 val / 12 test), rebuilt the YOLO dataset,
+retrained (`model-v1-40train`) and re-tuned classical on the same new
+split for a fair comparison. Result: YOLO F1 0.813, mAP@0.5 0.827
+(biggest jump yet), count MAE 3.00. Flagged that val also grew (20→25,
+2 new rows) alongside train, so not a clean isolated comparison — but
+noted this is itself informative: F1/mAP *improved* on a val set with
+rows never seen before, real evidence against the domain-similarity
+concern raised at the first run. Classical re-tuned on the same data
+moved only slightly (F1 0.588→0.560) despite 4x the tuning images,
+suggesting it's near its ceiling. Corrected a now-stale paragraph in
+`docs/stage-6-notes.md` that still claimed classical wins on count
+accuracy (true before the NMS fix, not after). 45/45 tests pass
+(unchanged).
+
+**Student review notes:**

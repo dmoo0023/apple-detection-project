@@ -40,34 +40,41 @@ that's a red flag worth investigating before trusting the fancier method.
 
 The five colour thresholds (two hue bounds, saturation minimum, value
 minimum, Lab 'a' minimum) were grid-searched — 32 combinations — scored by
-**F1 on the train split's currently-labelled images only** (10, as of the
-2026-10-24 re-tune — was 7 at first run), never val or
-test (rule 3). The best combination (train F1 = 0.545) was then evaluated
-**once** on the 20 labelled val images through `src/evaluate.py`.
+**F1 on the train split's currently-labelled images only** (40, as of the
+latest re-tune — 7 at first run, 10, then 40), never val or test (rule 3).
+The grid search is re-run from scratch each time (never incrementally
+tuned), so the best combination found also changes each time. Evaluated
+**once** per re-tune on the current labelled val images through
+`src/evaluate.py`.
 
 ## Result
 
-**Updated 2026-10-24** after the train split grew from 7 to 10 labelled
-images (Stage 7/8's ongoing labelling) — the grid search was re-run and
-picked a different threshold combination; numbers below are current.
+**Updated 2026-10-24 (latest)**, now on 40 train / 25 val labelled images
+(up from the 10/20 of the previous update) — the grid search was re-run
+again and picked yet another threshold combination; numbers below are
+current.
 
 | Metric | Value |
 |---|---|
-| Precision | 0.583 |
-| Recall | 0.593 |
-| F1 | 0.588 |
-| mAP@0.5 | 0.211 |
-| Count MAE (apples/image) | 5.15 |
-| Count bias | +0.45 (slight over-counting) |
-| Count correlation | 0.902 |
+| Precision | 0.548 |
+| Recall | 0.572 |
+| F1 | 0.560 |
+| mAP@0.5 | 0.200 |
+| Count MAE (apples/image) | 5.00 |
+| Count bias | +1.24 (over-counting) |
+| Count correlation | 0.905 |
 
 Full breakdown: `results/baseline_colour_v1_val_summary.md` and
-`results/baseline_colour_v1_val_matches.csv`. Train F1 (0.540) and val F1
-(0.588) stay close, so the (now 10-image) tuning set isn't *wildly*
-overfit, but 10 images is still a small basis for picking thresholds —
-worth re-checking again as more labels arrive.
+`results/baseline_colour_v1_val_matches.csv`. F1 moved only slightly
+(0.588→0.560) despite 4x the tuning images — classical's threshold-search
+approach appears to be close to its ceiling for this problem; contrast
+with YOLO, which kept improving noticeably over the same growth in
+labels (`docs/stage-8-notes.md`'s learning curve). A reasonable sign
+that colour thresholding alone cannot keep closing the gap just by
+tuning on more examples, which is useful context for the final Stage 9
+method comparison.
 
-**Why mAP@0.5 (0.211) is so much lower than F1 (0.588):** F1 uses the
+**Why mAP@0.5 (0.200) is so much lower than F1 (0.560):** F1 uses the
 lenient centre-distance match (within half the labelled radius); mAP@0.5
 requires 50% box overlap (IoU), which the classical pipeline's circles
 often miss even when well-centred, because of the next finding.
@@ -76,10 +83,11 @@ often miss even when well-centred, because of the next finding.
 `EXPERIMENTS.md`) is a different question from F1/mAP**: it asks whether
 the *total number* of apples predicted per image is close to the true
 count, regardless of whether individual apples were correctly localised.
-Classical's count bias here (+0.45, barely over-counting) looks good in
-isolation — see Stage 8's notes for why this is actually a case where a
-weaker per-apple detector produces a *more* accurate count than a
-stronger one.
+Early on, classical briefly had *better* count accuracy than YOLO despite
+losing on every per-apple metric — but that gap closed once a YOLO-side
+evaluation bug (an overly loose NMS threshold letting near-duplicate boxes
+through) was found and fixed; see `docs/stage-8-notes.md` for the full
+story. As of the latest numbers, YOLO leads on count accuracy too.
 
 ## Failure modes (from `data/derived/stage6_overlays/`)
 

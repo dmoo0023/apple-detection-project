@@ -241,3 +241,40 @@ Fixed a related bug while doing this: `scripts/plot_learning_curve.py`
 used `drop_duplicates(keep="first")`, which would have kept each run's
 *original* (stale, pre-fix) logged metrics instead of the re-evaluated
 ones. Changed to `keep="last"`.
+
+## model-v1-40train — Stage 8 fourth YOLO fit (learning curve, point 4)
+
+**Date:** 2026-10-24 (same day)
+**What:** Retrained after the student added 16 more labels across 6 new
+rows (77 total: 40 train / **25 val** / 12 test), deliberately spread
+widely (3-4 images per row) rather than concentrated, specifically to
+test the domain-similarity concern from `model-v1-first-fit`'s entry.
+Also re-tuned and re-ran `baseline-colour-v1` on the same new train/val
+sets, for a fair comparison.
+
+**Not a clean single-variable change**: val grew too (20→25, rows 8 and 9
+added), so this isn't purely "train count changed, everything else held."
+Flagged rather than hidden — see `docs/stage-8-notes.md`.
+
+**Result (val, through `src/evaluate.py`, iou=0.3):** precision 0.785,
+recall 0.844, F1 **0.813**, mAP@0.5 **0.827**, count MAE 3.00, count bias
++2.12 — F1 and mAP both took their **biggest jump yet** (from 0.779/0.811
+at 31 images), on a val set that now includes 2 rows the model had never
+seen in training or validation before. **This is real evidence against
+the domain-similarity concern**, not just hope that it isn't a problem:
+if the earlier strong numbers were mostly the model recognising this
+orchard's early rows rather than apples in general, performance should
+have dropped on the new rows, not improved.
+
+**Classical, re-tuned on the same 40/25 split:** F1 0.560, mAP@0.5 0.200,
+count MAE 5.00 — essentially unchanged from its 10-image numbers (F1
+0.588) despite 4x the tuning data, suggesting classical's threshold-search
+approach is close to its ceiling for this problem, unlike YOLO which kept
+improving. YOLO now leads classical on every single metric at this point.
+
+**Count MAE ticked up slightly** (2.60→3.00) alongside the val-set change
+— not read as a new regression, since there's no clean "only one thing
+changed" comparison here (unlike the 31-image dip, which was isolated to
+an NMS artifact). Worth checking again once val holds steady.
+
+**Tag:** none yet.
