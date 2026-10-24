@@ -4,13 +4,15 @@ Detects apples in RGB-D images of orchard trees and estimates each
 apple's 3D position, for an automated picking application. Built
 following `agent_workflow.md`, the project brief this repo implements.
 
-**Status: Stages 0-8 of 10 complete.** Stage 8 (model training: learning
-curve, experiment series, seed repeats, error analysis) is done and
-tagged (`stage-8-done`, `model-v1`). Stages 9 (final test evaluation,
-gated on checkpoint C3 — the student confirming the chosen method) and 10
-(full inference + deliverables) have not started. See
-[Current results](#current-results) below for where things stand, and
-[`docs/limitations.md`](docs/limitations.md) for what isn't resolved yet.
+**Status: Stages 0-9 of 10 complete.** Stage 9's one-time locked test
+evaluation is done and tagged `final-test-eval` — YOLO (`model-v1`),
+chosen at checkpoint C3 after the full Stage 8 experiment series, scored
+**F1=0.757, mAP@0.5=0.755** on the locked test split (lower than its val
+numbers, reported honestly as the real generalisation gap, not retuned
+away). Only Stage 10 (full inference over all 544 trees + final
+deliverables) remains. See [Current results](#current-results) below for
+where things stand, and [`docs/limitations.md`](docs/limitations.md) for
+what isn't resolved.
 
 ## Setup
 
@@ -103,28 +105,27 @@ re-tune the classical baseline on the current labels.
 
 ## Current results
 
-**Stage 8 exit check is complete**: logged experiments, learning curve,
-best config with seed spread, and error analysis are all done (tagged
-`model-v1`, `stage-8-done`). Two methods compared on the same val split
-through the one shared evaluation module (`src/evaluate.py`), at 86
-labelled images (40 train / 26 val / 20 test):
+**Stages 8 and 9 are both complete.** Stage 8's exit check (logged
+experiments, learning curve, best config with seed spread, error
+analysis) passed, choosing YOLO at checkpoint C3; Stage 9's one-time
+locked test evaluation (`final-test-eval`) then ran it on the held-out
+test split (rows never seen in training/validation at all):
 
-| | Classical (`baseline-colour-v1`) | YOLO (`model-v1-40train`, standing best) |
-|---|---|---|
-| F1 | 0.560 | **0.812** |
-| mAP@0.5 | 0.200 | **0.830** |
-| Count MAE (apples/image) | 5.00 | **2.96** |
+| | Classical (val) | YOLO val (`model-v1`) | **YOLO test (`final-test-eval`, locked)** |
+|---|---|---|---|
+| F1 | 0.548 | 0.812 | **0.757** |
+| mAP@0.5 | 0.204 | 0.830 | **0.755** |
+| Count MAE (apples/image) | — | 2.96 | 4.55 |
 
-YOLO's config was chosen against a 6-way one-change experiment series
-(model size, pretrained-vs-random, LR/schedule, batch/epochs,
-augmentation, boxes-vs-segmentation) and seed-repeat testing on the two
-closest contenders — none beat it convincingly, and the margin against
-the runner-up is honestly reported as close rather than overstated. Full
-tables in `results/`; the complete narrative (including a tried-and-
-reverted experiment, two corrected mistakes, and the error analysis) is
-in `EXPERIMENTS.md` and `docs/stage-6-notes.md` / `docs/stage-8-notes.md`.
-Stages 9 (final test evaluation) and 10 (full inference + deliverables)
-have not started.
+Test scores are lower than val on every metric — reported as the real,
+honest generalisation gap (some val rows were seen repeatedly during
+development; test rows never were), not retuned away, per the brief's
+"no tuning after the final test evaluation" rule. Full tables in
+`results/`; the complete narrative (including a tried-and-reverted
+experiment, corrected mistakes, the error analysis, and the Stage 9
+decision table) is in `EXPERIMENTS.md`, `docs/stage-6-notes.md`,
+`docs/stage-8-notes.md`, and `docs/stage-9-notes.md`. Only Stage 10 (full
+inference over all 544 trees + final deliverables) remains.
 
 ## Known limitations
 

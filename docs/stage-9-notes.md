@@ -36,10 +36,42 @@ margin is not close on any accuracy metric — classical's only edge is a
 small absolute speed advantage (both are fast enough in practice: 55ms vs
 21ms per image).
 
-## Next: locked test evaluation
+## Locked test evaluation — DONE, `final-test-eval`
 
-Per rule 3 and Section 3 item 5: the test split has not been touched for
-anything but structural validation (file existence, label format) up to
-this point. The chosen method is now evaluated **once**, on a clean git
-tree (refused automatically if dirty — `src/tracking.py`'s
-`refuse_if_dirty()`), tagged `final-test-eval`, with no tuning afterward.
+Run once, on a clean git tree (`src/tracking.py`'s `refuse_if_dirty()`
+would have refused otherwise), by `scripts/run_final_test_eval.py`.
+**This is the project's one and only look at test**, on the 20 labelled
+images in rows 4 and 21 — rows the model had never seen in training or
+validation at all.
+
+| | Val (checkpoint C3 decision table) | **Test (final, locked)** |
+|---|---|---|
+| Precision | 0.785 | 0.753 |
+| Recall | 0.842 | 0.761 |
+| F1 | 0.812 | **0.757** |
+| mAP@0.5 | 0.830 | **0.755** |
+| Count MAE | 2.96 | 4.55 |
+| Count bias | — | +0.45 |
+
+**Test scores noticeably lower than val, reported plainly — this is
+exactly what a held-out test set is for, not a problem to explain away.**
+Some of val's rows (8, 9) were only added partway through labelling and
+evaluated repeatedly as the model improved; test's rows were never looked
+at until this single run. A ~5-7 point drop on every detection metric
+going from "rows seen during development" to "rows never seen at all" is
+a real, honest measurement of the generalisation gap this project's
+earlier row-diversity checks (Stage 8) could only partially estimate.
+Encouragingly, it's a drop, not a collapse — F1 and mAP both stayed above
+0.75, consistent with the model having learned something about apples in
+general, not just this orchard's already-seen rows.
+
+One apple (`R04U13`, index 19) has no usable depth — `robust_depth()`
+found too few valid pixels in its sampling disc and correctly reported
+`None`/`"unknown"` rather than a fabricated value (rule 4). Its 2D
+position is still matched and scored normally; only its depth-dependent
+numbers (z, 3D proxy error, distance band) are excluded. This is the
+pipeline working as designed, not a bug.
+
+**Per the brief: no tuning happens after this.** If this result had been
+worse, that would be the answer, not a cue to retune and re-run. Tagged
+`final-test-eval`.

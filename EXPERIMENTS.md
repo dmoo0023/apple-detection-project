@@ -461,3 +461,24 @@ box-centre beats mask-centroid under occlusion, and YOLO's accuracy lead
 is wide enough that a hybrid's only plausible benefit (speed) isn't worth
 the added complexity here. **Checkpoint C3: student confirmed YOLO.**
 Proceeding to the one-time locked test evaluation.
+
+## FINAL TEST EVALUATION — `final-test-eval`
+
+**Date:** 2026-10-24 (same day)
+**What:** The one and only evaluation of YOLO (`model-v1`) on the locked
+test split (20 images, rows 4+21 — never seen in training or validation).
+Run on a clean git tree (`refuse_if_dirty()`), `scripts/run_final_test_eval.py`.
+
+| | Val | **Test (final)** |
+|---|---|---|
+| F1 | 0.812 | **0.757** |
+| mAP@0.5 | 0.830 | **0.755** |
+| Count MAE | 2.96 | 4.55 |
+
+Lower than val on every metric, reported as-is — a real generalisation
+gap between rows seen during development and rows never looked at until
+this run, not something to retune away. Still well above collapse (F1,
+mAP both > 0.75). One apple (`R04U13`) had no usable depth sample;
+correctly reported as `None`/unknown rather than fabricated. Full
+reasoning in `docs/stage-9-notes.md`. **No tuning after this result, per
+the brief.** Tagged `final-test-eval`.

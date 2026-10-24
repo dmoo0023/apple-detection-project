@@ -421,3 +421,20 @@ complexity here. Checkpoint C3 resolved. Proceeding to the one-time
 locked test evaluation next.
 
 **Student review notes:**
+
+## Stage 9: FINAL TEST EVALUATION — 2026-10-24
+
+**Asked:** Continuing Stage 9 after checkpoint C3 confirmation.
+
+**Produced:** `scripts/run_final_test_eval.py` (refuses to run on a dirty
+tree, committed before running so the logged commit hash is accurate),
+run once on the locked test split: F1=0.757, mAP@0.5=0.755, count
+MAE=4.55 — noticeably lower than val's 0.812/0.830/2.96, reported plainly
+as the real generalisation gap between rows seen during development and
+rows never seen until this run, not explained away or retuned. One apple
+had no usable depth sample and was correctly reported as unknown rather
+than fabricated. Tagged `final-test-eval`. No tuning after this result,
+per the brief. `docs/stage-9-notes.md` and `EXPERIMENTS.md` updated with
+the full val-vs-test comparison.
+
+**Student review notes:**
