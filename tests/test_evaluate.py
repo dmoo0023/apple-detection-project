@@ -18,6 +18,7 @@ from src.evaluate import (  # noqa: E402
     precision_recall_f1,
     summarise,
 )
+from src.evaluate import DISTANCE_BANDS  # noqa: E402
 from src.geometry import Intrinsics  # noqa: E402
 
 INTR = Intrinsics(fx=600.0, fy=600.0, cx=320.0, cy=240.0)
@@ -113,6 +114,23 @@ def test_missing_prediction_counts_as_false_negative() -> None:
     assert det["fp"] == 0
     assert det["recall"] == pytest.approx(2 / 3)
     assert det["precision"] == pytest.approx(1.0)
+
+
+def test_summarise_reports_out_of_range_band_not_silently() -> None:
+    # every DISTANCE_BANDS entry is >= 0.4m; a depth below that must still show up
+    # in the report as "out_of_range", not just vanish from the per-band table.
+    assert all(lo >= 0.4 for lo, hi in DISTANCE_BANDS)
+    gt = [Apple2D("img1", cx=200.0, cy=150.0, radius_px=20.0)]
+    pred = [Apple2D("img1", cx=200.0, cy=150.0, radius_px=20.0)]
+    depth_lookup = {"img1": np.full((480, 640), 0.15, dtype=float)}  # below every band
+
+    matches = match_all(gt, pred)
+    match_df = per_match_errors(gt, pred, matches, depth_lookup, INTR)
+    summary = summarise(gt, pred, matches, match_df)
+
+    assert "out_of_range" in summary["by_distance_band"]
+    assert summary["by_distance_band"]["out_of_range"]["n"] == 1
+    assert all(band not in summary["by_distance_band"] for band in [f"{lo:.1f}-{hi:.1f}m" for lo, hi in DISTANCE_BANDS])
 
 
 def test_extra_prediction_counts_as_false_positive() -> None:
