@@ -146,3 +146,23 @@ checkpoint-C1 depth-scale approximation — the brief's "2-3cm of the true
 centre" target cannot be read literally against these numbers.
 
 **Student review notes:**
+
+## Stage 6: Classical baseline — 2026-10-24
+
+**Asked:** Build `src/classical.py` (HSV+Lab red thresholding, morphology,
+watershed splitting, least-squares circle fit), tune thresholds by grid
+search on train only, evaluate once on val through the shared geometry/
+evaluation modules, save overlays, list failure modes, tag
+`baseline-colour-v1`.
+
+**Produced:** `src/classical.py`, `src/tracking.py` (new: git commit
+hash/dirty-flag logging to `runs/experiments.csv`), `EXPERIMENTS.md` (new),
+`scripts/run_classical_baseline.py`, `tests/test_classical.py` (7 tests,
+all passing), `results/baseline_colour_v1_val_summary.md` + `..._matches.csv`,
+`data/derived/stage6_overlays/`, `docs/stage-6-notes.md`. Val: precision
+0.660, recall 0.404, F1 0.501, mAP@0.5 0.103. While building this, found
+and fixed a real bug in `src/evaluate.py`'s distance-band reporting (valid
+depths outside every named band were silently dropped instead of reported
+as "out_of_range") — added a regression test. 41/41 project tests pass.
+
+**Student review notes:**

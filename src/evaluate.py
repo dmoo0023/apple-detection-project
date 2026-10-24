@@ -275,7 +275,12 @@ def summarise(
         }
 
     summary = {"detection": detection, "overall": _block(match_df), "by_distance_band": {}}
-    for band_label in [f"{lo:.1f}-{hi:.1f}m" for lo, hi in DISTANCE_BANDS] + ["unknown"]:
+    # "out_of_range" (a valid depth, but outside every defined band -- this project's real
+    # data regularly falls below 0.4m due to the checkpoint-C1 depth-scale limitation) and
+    # "unknown" (no usable depth at all) must both be reported, not silently dropped --
+    # otherwise a result with every match out of range would print an empty, misleading table.
+    all_band_labels = [f"{lo:.1f}-{hi:.1f}m" for lo, hi in DISTANCE_BANDS] + ["out_of_range", "unknown"]
+    for band_label in all_band_labels:
         sub = match_df[match_df["distance_band"] == band_label] if not match_df.empty else match_df
         if len(sub):
             summary["by_distance_band"][band_label] = _block(sub)
