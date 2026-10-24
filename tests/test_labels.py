@@ -124,14 +124,19 @@ def test_extract_apples_no_warnings_on_clean_shape(tmp_path: Path) -> None:
 
 
 # --- real dataset: every labelled image converts without exceptions --------
+#
+# The labelled count grows over time (the student labels more as the project
+# progresses, formally via Stage 7's pre-labelling loop, but also ad hoc).
+# This test does not hard-code that count -- it checks every labelled image
+# that exists RIGHT NOW converts cleanly, whatever the count is.
 
-def test_all_25_labelled_images_convert() -> None:
+def test_all_labelled_images_convert() -> None:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from src.config import load_paths
 
     rgb_dir = load_paths()["rgb_dir"]
     json_files = sorted(rgb_dir.glob("*.json"))
-    assert len(json_files) == 25, f"expected 25 labelled images, found {len(json_files)}"
+    assert len(json_files) >= 25, f"expected at least the 25 images found in Stage 1, found {len(json_files)}"
 
     total_apples = 0
     for jp in json_files:
@@ -145,4 +150,4 @@ def test_all_25_labelled_images_convert() -> None:
             assert det.startswith("0 ")
             assert seg.startswith("0 ")
         total_apples += len(apples)
-    assert total_apples == 781, f"expected 781 apples across all 25 images, got {total_apples}"
+    assert total_apples > 0
