@@ -1,6 +1,13 @@
-"""Stage 4 tests: backprojection, robust depth sampling, and apple centre
-reconstruction, including a synthetic-sphere accuracy test (with and
-without depth noise) as required by the workflow's Stage 4 exit check.
+"""Stage 4 tests: backprojection, robust depth sampling, and the 3D surface
+point computed from a detection, including a synthetic-sphere accuracy
+test (with and without depth noise).
+
+SCOPE NOTE: as of checkpoint C2 (2026-10-24), this module reports the
+apple's visible near surface, not a corrected centre -- see
+src/geometry.py's module docstring. The synthetic sphere test below checks
+the recovered point against the sphere's true NEAR-SURFACE intersection
+point (what a perfect depth sensor would actually measure), not the
+sphere's centre.
 """
 
 import sys
@@ -13,9 +20,9 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.geometry import (  # noqa: E402
     Intrinsics,
-    apple_centre_3d,
     backproject,
     robust_depth,
+    surface_point_3d,
 )
 from src.config import load_paths, load_camera  # noqa: E402
 
@@ -54,15 +61,15 @@ def test_robust_depth_median_ignores_outliers() -> None:
     assert result.depth_m == pytest.approx(0.80, abs=1e-6)
 
 
-def test_apple_centre_missing_depth_is_none_not_zero() -> None:
+def test_surface_point_missing_depth_is_none_not_zero() -> None:
     depth = np.zeros((480, 640), dtype=float)
-    result = apple_centre_3d(320, 240, 20, depth, INTR)
-    assert result.centre_m is None
+    result = surface_point_3d(320, 240, 20, depth, INTR)
+    assert result.point_m is None
     assert result.is_valid is False
     assert result.reason is not None
 
 
-# --- synthetic sphere: exact accuracy test (Stage 4 exit check) ------------
+# --- synthetic sphere: accuracy of the recovered SURFACE point -------------
 
 def make_sphere_depth_image(
     centre_m: np.ndarray, radius_m: float, intrinsics: Intrinsics,
@@ -107,45 +114,54 @@ def make_sphere_depth_image(
     return depth, u_centre, v_centre, radius_px
 
 
-def test_synthetic_sphere_no_noise_within_1mm() -> None:
+def true_near_surface_point(centre_m: np.ndarray, radius_m: float, intrinsics: Intrinsics) -> np.ndarray:
+    """The exact point on the sphere closest to the camera, along the ray through its
+    projected centre -- what a noise-free depth sensor would measure for this apple."""
+    cz3 = centre_m[2]
+    u = intrinsics.cx + intrinsics.fx * centre_m[0] / cz3
+    v = intrinsics.cy + intrinsics.fy * centre_m[1] / cz3
+    direction = np.array([(u - intrinsics.cx) / intrinsics.fx, (v - intrinsics.cy) / intrinsics.fy, 1.0])
+    near_z = cz3 * (np.linalg.norm(centre_m) - radius_m) / np.linalg.norm(centre_m)
+    return direction * near_z
+
+
+def test_synthetic_sphere_surface_point_no_noise_within_3mm() -> None:
     true_centre = np.array([0.02, -0.01, 0.60])  # 2cm right, 1cm up, 0.6m deep
     radius_m = 0.035  # 3.5cm, a realistic apple radius
 
     depth, u, v, r_px = make_sphere_depth_image(true_centre, radius_m, INTR, noise_std_m=0.0)
-    result = apple_centre_3d(u, v, r_px, depth, INTR, method="project_and_offset")
+    result = surface_point_3d(u, v, r_px, depth, INTR)
 
     assert result.is_valid, result.reason
-    error = np.linalg.norm(result.centre_m - true_centre)
-    assert error < 0.001, f"error {error * 1000:.3f} mm exceeds 1mm (no noise)"
+    expected_surface = true_near_surface_point(true_centre, radius_m, INTR)
+    error = np.linalg.norm(result.point_m - expected_surface)
+    # Not sub-millimetre even with zero sensor noise: robust_depth's median is taken
+    # over a disc covering half the apple's radius, and a curved sphere's depth varies
+    # across that disc, so the median legitimately differs a little from the exact
+    # single centre pixel. This tolerance reflects that real, expected effect.
+    assert error < 0.003, f"error {error * 1000:.3f} mm exceeds 3mm (no sensor noise)"
+
+    # and it should NOT match the sphere's true centre -- that's the whole point of the
+    # checkpoint-C2 scope decision: this is a surface point, roughly one radius short of
+    # the true centre (a little less than the full radius, since the disc-median again
+    # pulls the estimate slightly past the exact apex, toward the centre).
+    centre_error = np.linalg.norm(result.point_m - true_centre)
+    assert centre_error == pytest.approx(radius_m, abs=0.003)
 
 
-def test_synthetic_sphere_with_noise_within_5mm() -> None:
+def test_synthetic_sphere_surface_point_with_noise_within_5mm() -> None:
     true_centre = np.array([0.02, -0.01, 0.60])
     radius_m = 0.035
 
     depth, u, v, r_px = make_sphere_depth_image(
         true_centre, radius_m, INTR, noise_std_m=0.002, seed=1  # 2mm depth noise, typical of a real sensor
     )
-    result = apple_centre_3d(u, v, r_px, depth, INTR, method="project_and_offset")
+    result = surface_point_3d(u, v, r_px, depth, INTR)
 
     assert result.is_valid, result.reason
-    error = np.linalg.norm(result.centre_m - true_centre)
+    expected_surface = true_near_surface_point(true_centre, radius_m, INTR)
+    error = np.linalg.norm(result.point_m - expected_surface)
     assert error < 0.005, f"error {error * 1000:.3f} mm exceeds 5mm (2mm depth noise)"
-
-
-def test_synthetic_sphere_sphere_fit_method() -> None:
-    true_centre = np.array([0.0, 0.0, 0.70])
-    radius_m = 0.04
-
-    depth, u, v, r_px = make_sphere_depth_image(true_centre, radius_m, INTR, noise_std_m=0.0)
-    result = apple_centre_3d(u, v, r_px, depth, INTR, method="sphere_fit")
-
-    assert result.is_valid, result.reason
-    error = np.linalg.norm(result.centre_m - true_centre)
-    # sphere_fit only sees the near hemisphere from one viewpoint, so it is
-    # a biased estimate even with perfect data -- looser tolerance than
-    # project_and_offset is expected and documented in src/geometry.py.
-    assert error < 0.02, f"error {error * 1000:.3f} mm exceeds the 20mm single-view sphere-fit tolerance"
 
 
 # --- docs/stage-4-worked-example.md: code must reproduce the hand calc -----
@@ -167,12 +183,6 @@ def test_worked_example_matches_hand_calculation() -> None:
     assert ds.valid_pixel_count == 162
     assert ds.depth_m == pytest.approx(0.155, abs=1e-9)
 
-    surf = backproject(u, v, ds.depth_m, intr)
-    assert surf == pytest.approx([0.010811, -0.019437, 0.155000], abs=1e-6)
-
-    radius_m = r_px * ds.depth_m / intr.fx
-    assert radius_m == pytest.approx(0.0048291, abs=1e-6)
-
-    result = apple_centre_3d(u, v, r_px, depth_m, intr, method="project_and_offset")
+    result = surface_point_3d(u, v, r_px, depth_m, intr)
     assert result.is_valid
-    assert result.centre_m == pytest.approx([0.011145, -0.020037, 0.159780], abs=1e-5)
+    assert result.point_m == pytest.approx([0.010811, -0.019437, 0.155000], abs=1e-6)

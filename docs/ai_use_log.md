@@ -118,3 +118,31 @@ hard-coded "25 images / 781 apples" test assertion to check against
 whatever's currently labelled instead. 34/34 project tests pass.
 
 **Student review notes:**
+
+## Checkpoint C2 scope decision — 2026-10-24
+
+**Asked:** At the C2 code walkthrough, student judged the surface-to-centre
+correction in `src/geometry.py` as overcomplicating the problem given the
+depth scale is already an accepted approximation, and asked to remove it
+entirely, treating the apple's near-surface point as the point of interest.
+
+**Produced:** Simplified `src/geometry.py`: removed `apple_centre_3d`
+(both the `project_and_offset` and `sphere_fit` methods) and its
+`AppleCentreResult`/`_fit_sphere`/`_backproject_patch` helpers; added a
+plain `surface_point_3d()` (robust depth + backproject, no correction).
+Updated `src/evaluate.py` to call it, with docstrings/markdown-caveat text
+now stating the resulting ~3-4.5cm systematic surface-vs-centre bias
+explicitly. Rewrote `tests/test_geometry.py` (dropped the offset/sphere-fit
+tests, repurposed the synthetic-sphere test to validate the surface point
+against the sphere's true near-surface intersection, with tolerances
+loosened from 1mm/5mm to 3mm/5mm to reflect real curvature-averaging
+effects of the disc-median depth sample). Rewrote
+`docs/stage-4-worked-example.md` and `docs/stage-4-notes.md` to match, and
+added an addendum to `docs/stage-5-notes.md`. 33/33 tests pass.
+**Consequence stated plainly for the final report:** every 3D position in
+this project now carries a known, deliberate, un-corrected ~3-4.5cm bias
+toward the camera versus the apple's true centre, on top of the
+checkpoint-C1 depth-scale approximation — the brief's "2-3cm of the true
+centre" target cannot be read literally against these numbers.
+
+**Student review notes:**

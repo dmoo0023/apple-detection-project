@@ -4,7 +4,19 @@ This walks through `src/geometry.py`'s calculation for one real labelled
 apple, with real numbers, so it can be checked by hand (calculator, not
 code) and compared against what the code actually outputs.
 `tests/test_geometry.py::test_worked_example_matches_hand_calculation`
-checks these exact numbers against `apple_centre_3d()`'s output.
+checks these exact numbers against `surface_point_3d()`'s output.
+
+**Scope note (checkpoint C2, 2026-10-24):** this computes the apple's
+**visible near surface**, not a corrected centre. An earlier version of
+this module pushed the surface point further away from the camera by one
+apple radius, to estimate the true centre; the student's decision at C2
+was to drop that correction and report the surface point directly, since
+adding a geometric correction on top of an already-approximate depth scale
+(checkpoint C1) added complexity without adding trustworthy precision. The
+consequence, stated plainly: every reported 3D position in this project is
+offset from the apple's true centre by roughly one apple radius, always
+toward the camera, always by the same mechanism. Keep that in mind reading
+any 3D number in this project, including the one computed below.
 
 ## The apple
 
@@ -17,7 +29,7 @@ labelled apple (index 0) in `data/derived/apples_2d.csv`.
 |---|---|---|---|
 | u (pixel column) | 352.235 | px | labelme circle centre |
 | v (pixel row) | 162.607 | px | labelme circle centre |
-| radius_px | 14.398 | px | distance from centre to labelme's second point |
+| radius_px | 14.398 | px | distance from centre to labelme's second point (used only to pick the depth-sampling disc, see Step 1) |
 | fx | 462.14 | px | `configs/camera.yaml` (approximate, see checkpoint C1) |
 | fy | 617.16 | px | `configs/camera.yaml` (approximate) |
 | cx | 320.0 | px | `configs/camera.yaml` (assumed image centre) |
@@ -39,8 +51,7 @@ outliers.
 
 This number being ~0.155 m, far under the dataset's stated 0.4–1.2 m
 capture range, is the direct, concrete consequence of the depth-scale
-limitation accepted at checkpoint C1 — not a bug in this calculation. It is
-exactly the kind of number that flagged the problem in the first place.
+limitation accepted at checkpoint C1 — not a bug in this calculation.
 
 ## Step 2: back-project the surface point
 
@@ -50,61 +61,14 @@ Y = (v - cy) * Z / fy = (162.607 - 240.0) * 0.155 / 617.16  = -0.019437 m
 Z =                                                            0.155000 m
 ```
 
-**Surface point = (0.010811, -0.019437, 0.155000) m.** This is where the
-depth sensor's view of the apple's near surface sits in 3D — not the
-apple's centre yet.
-
-## Step 3: convert the pixel radius to a metric radius
-
-```
-radius_m = radius_px * Z / fx = 14.398 * 0.155 / 462.14 = 0.0048291 m
-         ≈ 4.83 mm
-```
-
-**Is this a realistic apple radius? No.** A real apple is roughly
-30–45 mm in radius (60–90 mm diameter). 4.83 mm is a grape, not an apple —
-again a direct symptom of the depth value (0.155 m) being about 4-8x
-smaller than the real capture distance would have produced. If the depth
-scale were correct (e.g. true depth ~0.7 m instead of 0.155 m), the same
-pixel radius would convert to `14.398 * 0.7 / 462.14 ≈ 0.0218 m` (21.8 mm)
-— still on the small side for an apple but far more plausible, which
-illustrates how directly the depth-scale error propagates into every
-downstream number, including ones (like physical size) that have nothing
-to do with depth accuracy on the surface of it.
-
-## Step 4: push the surface point back to the centre
-
-The viewing ray from the camera through this pixel is the direction of the
-surface point itself (the ray passes through the origin and the surface
-point by construction). Move along that same direction, away from the
-camera, by `radius_m`:
-
-```
-ray length  = |surface_point| = sqrt(0.010811^2 + 0.019437^2 + 0.155^2)
-            = 0.156588 m
-ray unit    = surface_point / ray_length
-            = (0.069044, -0.124130, 0.989861)
-
-centre = surface_point + radius_m * ray_unit
-       = (0.010811, -0.019437, 0.155000) + 0.0048291 * (0.069044, -0.124130, 0.989861)
-       = (0.011145, -0.020037, 0.159780) m
-```
-
-**Corrected centre = (0.011145, -0.020037, 0.159780) m.**
-
-## Before / after
-
-| | X (m) | Y (m) | Z (m) |
-|---|---|---|---|
-| Surface point (before) | 0.010811 | -0.019437 | 0.155000 |
-| Apple centre (after) | 0.011145 | -0.020037 | 0.159780 |
-| Difference | +0.000334 | -0.000600 | +0.004780 |
-
-The correction moves the point almost entirely in +Z (further from the
-camera, deeper into the scene) — exactly what "push along the viewing ray,
-away from the camera, by one radius" should do, with only a small X/Y
-shift because this particular pixel isn't perfectly centred on the optical
-axis.
+**Surface point = (0.010811, -0.019437, 0.155000) m.** This is this
+project's reported 3D position for this apple. Per the scope note above,
+it is where the depth sensor's view of the apple's near surface sits in
+3D — NOT the apple's centre. If this apple's real radius is, say, 3.5 cm,
+its true centre would be roughly a further 3.5 cm away from the camera
+along the same line of sight (further +Z, with a small +X/-Y shift from
+the ray geometry) — a gap this project's reported numbers do not correct
+for, by deliberate choice.
 
 ## Text sketch
 
@@ -114,16 +78,14 @@ camera (0,0,0)
     \   ray through pixel (352.2, 162.6)
      \
       \
-       \----X---->O         X = surface point (what the sensor sees)
-                    \        O = apple centre (what we want)
-                     \         (pushed one radius further along the ray)
-                      (apple, radius 4.8mm -- unrealistically
-                       small, see Step 3)
+       \----X                    X = reported 3D position
+            |<-- ~1 radius -->O     O = true apple centre (not computed
+            (not computed here)      by this project, see scope note)
 ```
 
 ## Check
 
-`src/geometry.py` reproduces every number above exactly (`robust_depth`,
-`backproject`, and `apple_centre_3d`'s `project_and_offset` method) — see
+`src/geometry.py` reproduces every number above exactly (`robust_depth`
+and `backproject`, combined in `surface_point_3d`) — see
 `tests/test_geometry.py::test_worked_example_matches_hand_calculation`,
 which asserts the code's output against these exact values.

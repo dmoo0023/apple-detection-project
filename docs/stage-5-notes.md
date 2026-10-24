@@ -41,12 +41,18 @@ hybrid (Stage 9) are graded identically (rule 7).
 4. **3D error — explicitly a PROXY.** There's no physical measurement of
    where any apple actually is, so "ground truth" 3D position here means:
    take the *labelled* circle, run it through the exact same
-   `apple_centre_3d` as the prediction, and measure the distance between
+   `surface_point_3d` as the prediction, and measure the distance between
    the two resulting 3D points. This measures how much a prediction's 2D
    circle disagrees with the label's 2D circle, expressed in 3D — not
-   distance to a real apple. `summary_to_markdown()` prints this caveat in
-   every single table it produces, so it can't be reported without the
-   caveat by accident later.
+   distance to a real apple, and (per the Stage 4 scope decision at
+   checkpoint C2) not distance to a true apple centre either, since both
+   sides of the comparison are near-surface points, each carrying the same
+   ~3–4.5cm systematic bias toward the camera. That shared bias mostly
+   cancels out of *method comparisons* (both sides are biased the same
+   way), but it means these numbers still cannot be read directly against
+   the brief's "2–3cm of the true centre" target.
+   `summary_to_markdown()` prints this caveat in every single table it
+   produces, so it can't be reported without the caveat by accident later.
 5. **Breakdowns.** Every error metric is also reported split into the
    three capture-distance bands from the brief (0.4–0.7m, 0.7–1.0m,
    1.0–1.2m — using the labelled apple's own measured depth to decide
@@ -99,9 +105,21 @@ check "every labelled image that currently exists converts cleanly,"
 since that count is expected to keep growing — a hard-coded number would
 have kept breaking the test suite for a reason that isn't actually a bug.
 
+## Addendum: updated for the checkpoint C2 geometry scope change
+
+After this stage was first built, checkpoint C2 (see
+`docs/stage-4-notes.md`) dropped `src/geometry.py`'s surface-to-centre
+correction. `src/evaluate.py`'s `per_match_errors()` was updated to call
+the renamed `surface_point_3d()` instead of the removed `apple_centre_3d()`,
+and its docstrings and the markdown summary's caveat text were updated to
+state the surface-point bias explicitly (see item 4 above). No test
+behaviour changed — the trivial-predictor and shifted-copy exit checks
+still pass unchanged, since they don't depend on which geometry mode is
+used, only that both sides of a comparison use the same one.
+
 ## Result
 
-34/34 project tests pass. Evaluation module built, tested against its own
+33/33 project tests pass. Evaluation module built, tested against its own
 exit check (trivial predictor perfect, shifted copy predictable), ready for
 Stage 6 onward to call.
 

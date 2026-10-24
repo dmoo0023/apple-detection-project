@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import linear_sum_assignment
 
-from src.geometry import Intrinsics, apple_centre_3d
+from src.geometry import Intrinsics, surface_point_3d
 
 DISTANCE_BANDS = [(0.4, 0.7), (0.7, 1.0), (1.0, 1.2)]
 
@@ -183,16 +183,23 @@ def per_match_errors(
     match_results: dict[str, ImageMatchResult],
     depth_lookup: dict[str, np.ndarray],
     intrinsics: Intrinsics,
-    geometry_method: str = "project_and_offset",
 ) -> pd.DataFrame:
     """One row per matched apple pair: 2D pixel/cm error and the 3D proxy error.
 
     3D error is a PROXY (item 4): there is no physical ground truth, so
-    "truth" here means the 3D centre computed from the LABELLED circle
-    through the exact same geometry module used for the prediction. This
-    measures how much the prediction's 2D circle disagrees with the label's
-    2D circle, expressed in 3D -- not distance to a real, physically
-    measured apple centre. State this wherever the numbers are reported.
+    "truth" here means the 3D SURFACE POINT computed from the LABELLED
+    circle through the exact same geometry module used for the prediction
+    (src.geometry.surface_point_3d -- see its module docstring: this
+    project reports the apple's visible near surface, not a corrected
+    centre, a scope decision made at checkpoint C2). This measures how much
+    the prediction's 2D circle disagrees with the label's 2D circle,
+    expressed in 3D -- not distance to a real, physically measured apple
+    centre, AND it additionally carries a known ~3-4.5cm systematic bias
+    toward the camera versus the apple's true centre (both gt and pred
+    carry the same bias, so this does not distort which METHOD looks
+    better, but it does mean these numbers cannot be read directly against
+    the brief's "2-3cm of the true centre" target). State this wherever
+    the numbers are reported.
     """
     rows = []
     gt_by_image: dict[str, list[Apple2D]] = {}
@@ -222,20 +229,20 @@ def per_match_errors(
             }
 
             if depth_m is not None:
-                gt_3d = apple_centre_3d(g.cx, g.cy, g.radius_px, depth_m, intrinsics, method=geometry_method)
-                pred_3d = apple_centre_3d(p.cx, p.cy, p.radius_px, depth_m, intrinsics, method=geometry_method)
+                gt_surf = surface_point_3d(g.cx, g.cy, g.radius_px, depth_m, intrinsics)
+                pred_surf = surface_point_3d(p.cx, p.cy, p.radius_px, depth_m, intrinsics)
 
-                if gt_3d.is_valid:
-                    row["z_m"] = gt_3d.depth_sample.depth_m
-                    row["distance_band"] = distance_band(gt_3d.depth_sample.depth_m)
+                if gt_surf.is_valid:
+                    row["z_m"] = gt_surf.depth_sample.depth_m
+                    row["distance_band"] = distance_band(gt_surf.depth_sample.depth_m)
 
                     du, dv = g.cx - p.cx, g.cy - p.cy
-                    z = gt_3d.depth_sample.depth_m
+                    z = gt_surf.depth_sample.depth_m
                     dx, dy = du * z / intrinsics.fx, dv * z / intrinsics.fy
                     row["error_2d_cm"] = 100 * float(np.hypot(dx, dy))
 
-                if gt_3d.is_valid and pred_3d.is_valid:
-                    row["error_3d_proxy_cm"] = 100 * float(np.linalg.norm(gt_3d.centre_m - pred_3d.centre_m))
+                if gt_surf.is_valid and pred_surf.is_valid:
+                    row["error_3d_proxy_cm"] = 100 * float(np.linalg.norm(gt_surf.point_m - pred_surf.point_m))
 
             rows.append(row)
 
@@ -282,8 +289,10 @@ def summary_to_markdown(summary: dict, method_name: str, split_name: str) -> str
         f"### {method_name} on {split_name}",
         "",
         "**3D error is a proxy** (no physical ground truth): the distance between the 3D "
-        "centre computed from the predicted circle and from the labelled circle, through "
-        "the same geometry module -- not distance to a physically measured apple.",
+        "SURFACE POINT (not a corrected centre -- see src/geometry.py's scope note) computed "
+        "from the predicted circle and from the labelled circle, through the same geometry "
+        "module -- not distance to a physically measured apple, and these positions also "
+        "carry a known ~3-4.5cm systematic bias toward the camera versus the true apple centre.",
         "",
         f"- Detection: precision={d['precision']:.3f}, recall={d['recall']:.3f}, "
         f"F1={d['f1']:.3f}, mAP@0.5={d['mAP@0.5']:.3f} (TP={d['tp']}, FP={d['fp']}, FN={d['fn']})",

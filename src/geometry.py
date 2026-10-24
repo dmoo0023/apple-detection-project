@@ -3,6 +3,24 @@ into a 3D position. Every method in this project (classical colour masking,
 YOLO, any hybrid) must go through these functions, so results are directly
 comparable (rule 7: one evaluation code path per concern).
 
+SCOPE NOTE (decided at checkpoint C2, 2026-10-24): this module reports the
+3D position of the apple's visible NEAR SURFACE, not a corrected centre. A
+depth camera only ever measures the surface facing it, offset from the true
+centre by roughly one apple radius (for a real apple, ~3-4.5 cm) along the
+viewing ray, always in the same direction. An earlier version of this
+module corrected for that (back-project, then push the point away from the
+camera by one radius) and validated the correction to <1mm on a synthetic
+sphere -- see git history / docs/stage-4-notes.md for that design and why
+it was dropped. The student's call: given the depth scale itself is already
+only an approximate placeholder (checkpoint C1), adding a geometric
+correction on top of it added complexity without adding trustworthy
+precision, so the project reports the simpler, more defensible surface
+point instead. Concretely, this means every reported 3D position has a
+KNOWN, SYSTEMATIC bias of roughly one apple radius versus the true centre,
+always in the same direction (away from the camera) -- state this
+explicitly anywhere these positions are reported or compared to the
+brief's "2-3cm of the true centre" target.
+
 Coordinate convention (camera frame, metres):
   X: right  (increases with pixel column u)
   Y: down   (increases with pixel row v)
@@ -17,10 +35,9 @@ Units: pixel coordinates and radii are in pixels unless stated "_m" for
 metres. Depth arrays passed into this module must already be in METRES
 (converting from whatever raw format a depth file uses, e.g. the 8-bit
 raw-as-mm approximation documented in configs/camera.yaml, is the caller's
-job -- see src/depth.py once Stage 6 exists, or scripts/*).
+job).
 """
 
-import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -142,112 +159,42 @@ def robust_depth(
 
 
 @dataclass
-class AppleCentreResult:
-    """Result of apple_centre_3d: either a 3D centre, or a reason it couldn't be computed."""
-    centre_m: np.ndarray | None       # [X, Y, Z] of the apple's CENTRE (not surface), metres
-    surface_point_m: np.ndarray | None  # [X, Y, Z] of the depth-sampled SURFACE point, metres
-    radius_m: float | None
+class SurfacePointResult:
+    """Result of surface_point_3d: the 3D position of the apple's visible near
+    surface (NOT a centre -- see the module docstring's scope note), or a
+    reason it couldn't be computed."""
+    point_m: np.ndarray | None  # [X, Y, Z], metres, camera frame
     depth_sample: DepthSample
     is_valid: bool
     reason: str | None = None
 
 
-def apple_centre_3d(
+def surface_point_3d(
     u: float,
     v: float,
     radius_px: float,
     depth_m: np.ndarray,
     intrinsics: Intrinsics,
-    method: str = "project_and_offset",
     **robust_depth_kwargs,
-) -> AppleCentreResult:
-    """Compute an apple's 3D CENTRE from its 2D detection (pixel centre + radius).
+) -> SurfacePointResult:
+    """Compute the 3D position of an apple's visible near surface from its 2D
+    detection (pixel centre + radius).
 
-    A depth sensor only sees the near surface of the apple facing the
-    camera, not its centre. Two ways to correct for that, selected by `method`:
+    This is deliberately NOT a centre estimate (see the module's scope
+    note): it samples a robust depth at the detection (robust_depth), then
+    back-projects (u, v, Z) straight to 3D with no further correction. The
+    result is biased toward the camera by roughly one apple radius versus
+    the apple's true centre, consistently, for every apple.
 
-    "project_and_offset" (default):
-      1. Sample a robust depth Z at the apple's pixel centre (robust_depth).
-      2. Back-project (u, v, Z) to the 3D SURFACE point.
-      3. Convert the apple's pixel radius to a metric radius at that depth:
-         radius_m = radius_px * Z / fx (the same small-angle pinhole
-         relationship used to go from 3D size to pixel size, inverted).
-      4. Move the surface point further from the camera, along the same
-         viewing ray, by radius_m -- i.e. push it from the near surface to
-         the sphere's centre, assuming the apple is a sphere of that radius
-         centred directly behind the surface point along that ray.
+    `radius_px` is accepted (not used to compute a size) purely so it can
+    be forwarded to robust_depth, which needs it to pick the sampling disc.
 
-    "sphere_fit":
-      Back-projects every valid pixel in the full detection radius (not
-      just the inner disc) to 3D, then fits a sphere to that point cloud
-      with a linear algebraic least-squares fit. This can do better when
-      enough of the apple's curved surface is visible, but with only ONE
-      viewpoint (per the brief) only the near hemisphere is ever seen, so
-      the fit is still a biased estimate, not a true measurement -- include
-      it for comparison, don't treat it as more "correct" by default.
-
-    Returns an AppleCentreResult; centre_m is None (with `reason` set)
+    Returns a SurfacePointResult; point_m is None (with `reason` set)
     whenever depth is missing or too sparse to trust -- never a silent zero.
     """
     depth_sample = robust_depth(depth_m, u, v, radius_px, **robust_depth_kwargs)
     if not depth_sample.is_valid or depth_sample.depth_m is None:
-        return AppleCentreResult(None, None, None, depth_sample, False, reason=depth_sample.reason)
+        return SurfacePointResult(None, depth_sample, False, reason=depth_sample.reason)
 
-    z = depth_sample.depth_m
-    surface_point = backproject(u, v, z, intrinsics)
-    radius_m = radius_px * z / intrinsics.fx
-
-    if method == "project_and_offset":
-        ray_length = float(np.linalg.norm(surface_point))
-        if ray_length == 0:
-            return AppleCentreResult(None, surface_point, radius_m, depth_sample, False,
-                                      reason="surface point is at the camera origin (zero depth)")
-        ray_unit = surface_point / ray_length
-        centre = surface_point + radius_m * ray_unit
-        return AppleCentreResult(centre, surface_point, radius_m, depth_sample, True, reason=None)
-
-    elif method == "sphere_fit":
-        points = _backproject_patch(u, v, radius_px, depth_m, intrinsics)
-        if points.shape[0] < 10:
-            return AppleCentreResult(None, surface_point, radius_m, depth_sample, False,
-                                      reason=f"only {points.shape[0]} valid 3D points for sphere fit, need >= 10")
-        centre, fitted_radius = _fit_sphere(points)
-        return AppleCentreResult(centre, surface_point, fitted_radius, depth_sample, True, reason=None)
-
-    else:
-        raise ValueError(f"unknown method {method!r}, expected 'project_and_offset' or 'sphere_fit'")
-
-
-def _backproject_patch(u: float, v: float, radius_px: float, depth_m: np.ndarray, intrinsics: Intrinsics) -> np.ndarray:
-    """Back-project every valid depth pixel within radius_px of (u, v) to 3D. Returns (N, 3) array."""
-    h, w = depth_m.shape
-    v0, v1 = max(0, int(v - radius_px)), min(h, int(v + radius_px) + 1)
-    u0, u1 = max(0, int(u - radius_px)), min(w, int(u + radius_px) + 1)
-    vv, uu = np.mgrid[v0:v1, u0:u1]
-    dist = np.hypot(uu - u, vv - v)
-    patch = depth_m[v0:v1, u0:u1]
-    mask = (dist <= radius_px) & np.isfinite(patch) & (patch > 0)
-    us, vs, zs = uu[mask], vv[mask], patch[mask]
-    xs = (us - intrinsics.cx) * zs / intrinsics.fx
-    ys = (vs - intrinsics.cy) * zs / intrinsics.fy
-    return np.stack([xs, ys, zs], axis=1)
-
-
-def _fit_sphere(points: np.ndarray) -> tuple[np.ndarray, float]:
-    """Algebraic least-squares sphere fit to an (N, 3) point cloud.
-
-    For a sphere of centre (a, b, c) and radius r, every point (x, y, z) on
-    it satisfies x^2+y^2+z^2 = 2ax + 2by + 2cz + (r^2 - a^2 - b^2 - c^2).
-    This is linear in [2a, 2b, 2c, d], so it can be solved with ordinary
-    least squares (not an exact fit for noisy, one-sided data, but a
-    standard closed-form approximation).
-    """
-    x, y, z = points[:, 0], points[:, 1], points[:, 2]
-    A = np.stack([2 * x, 2 * y, 2 * z, np.ones_like(x)], axis=1)
-    b = x**2 + y**2 + z**2
-    sol, *_ = np.linalg.lstsq(A, b, rcond=None)
-    a, b_, c, d = sol
-    centre = np.array([a, b_, c])
-    radius_sq = d + a**2 + b_**2 + c**2
-    radius = math.sqrt(max(radius_sq, 0.0))
-    return centre, radius
+    point = backproject(u, v, depth_sample.depth_m, intrinsics)
+    return SurfacePointResult(point, depth_sample, True, reason=None)
