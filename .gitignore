@@ -12,9 +12,12 @@ data/raw/
 data/derived/*.png
 data/derived/**/*.jpg
 
-# YOLO training dataset: copies of raw images, regenerated on demand by
-# scripts/prepare_yolo_dataset.py -- never committed (rule 1's spirit).
+# YOLO training datasets: copies of raw images (+ Ultralytics' *.cache files),
+# regenerated on demand by scripts/prepare_yolo_dataset.py /
+# prepare_yolo_seg_dataset.py -- never committed (rule 1's spirit).
 data/derived/yolo_dataset/
+data/derived/yolo_dataset_seg/
+*.cache
 
 # Model weights
 *.pt
