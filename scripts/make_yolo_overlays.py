@@ -33,7 +33,9 @@ def main() -> int:
 
     apples_df = pd.read_csv(load_paths()["derived_dir"] / "apples_2d.csv")
 
-    out_dir = REPO_ROOT / "data" / "derived" / "stage8_overlays"
+    # one subfolder per run_id, so overlays from different models/label-counts
+    # never overwrite each other -- all versions stay available side by side.
+    out_dir = REPO_ROOT / "data" / "derived" / "stage8_overlays" / args.run_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
     for image_id in val_ids:
