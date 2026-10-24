@@ -438,3 +438,22 @@ per the brief. `docs/stage-9-notes.md` and `EXPERIMENTS.md` updated with
 the full val-vs-test comparison.
 
 **Student review notes:**
+
+## Stage 10: full inference, all 544 trees — 2026-10-24
+
+**Asked:** "Yes, continue to Stage 10."
+
+**Produced:** `scripts/run_pipeline.py`, `scripts/stage10_summary.py`,
+`scripts/stage10_point_clouds.py`. Ran the chosen method over all 544
+trees: 19,294 apples, `results/apples_3d.csv`. Caught and fixed a real
+bug while building the summary (a plain groupby silently drops trees
+with zero detections — fixed by reindexing against the full manifest,
+surfacing one such tree, `R10U14`, explicitly). Kept that tree as one of
+5 example point-cloud/overlay trees rather than swapping it for a
+cleaner-looking one. Confirmed the checkpoint-C1 depth-scale limitation
+across the whole dataset (100% of valid depths below the stated 0.4m
+minimum). Finalised `README.md` with full Stage 9/10 commands and
+current status. Tagged `stage-10-done`. 50/50 tests pass throughout.
+**Checkpoint C4** (final outputs and README): waiting on the student.
+
+**Student review notes:**

@@ -4,15 +4,16 @@ Detects apples in RGB-D images of orchard trees and estimates each
 apple's 3D position, for an automated picking application. Built
 following `agent_workflow.md`, the project brief this repo implements.
 
-**Status: Stages 0-9 of 10 complete.** Stage 9's one-time locked test
-evaluation is done and tagged `final-test-eval` — YOLO (`model-v1`),
-chosen at checkpoint C3 after the full Stage 8 experiment series, scored
-**F1=0.757, mAP@0.5=0.755** on the locked test split (lower than its val
-numbers, reported honestly as the real generalisation gap, not retuned
-away). Only Stage 10 (full inference over all 544 trees + final
-deliverables) remains. See [Current results](#current-results) below for
-where things stand, and [`docs/limitations.md`](docs/limitations.md) for
-what isn't resolved.
+**Status: all 10 stages complete.** YOLO (`model-v1`) was chosen at
+checkpoint C3 after the full Stage 8 experiment series, scored
+**F1=0.757, mAP@0.5=0.755** on the one-time locked test evaluation
+(`final-test-eval`, lower than its val numbers, reported honestly as the
+real generalisation gap, not retuned away), and was then run over **all
+544 trees**: 19,294 apples detected
+(`results/apples_3d.csv`). See [Current results](#current-results) below
+for where things stand, and [`docs/limitations.md`](docs/limitations.md)
+for what isn't resolved — reproducing results from this README alone does
+not make those limitations go away, only reproduces them honestly.
 
 ## Setup
 
@@ -87,6 +88,26 @@ labels to the raw data folder.
 
 # Save visual overlays (red = label, green = detection) for a given run
 .\.venv\Scripts\python.exe scripts\make_yolo_overlays.py --run-id <name> [-n N]
+
+# Stage 9: decision table comparing classical vs YOLO on val (checkpoint C3)
+.\.venv\Scripts\python.exe scripts\stage9_decision_table.py
+
+# Stage 9: the ONE-TIME locked test evaluation -- ALREADY DONE, tagged
+# final-test-eval. Refuses to run on a dirty git tree. Do not re-run this
+# unless you are genuinely starting a new, separate final evaluation (e.g.
+# a materially different chosen method) -- it is not meant to be repeated
+# or tuned against.
+.\.venv\Scripts\python.exe scripts\run_final_test_eval.py
+
+# Stage 10: full inference over one tree or all 544 (-> results/apples_3d.csv)
+.\.venv\Scripts\python.exe scripts\run_pipeline.py --tree-id R01U01
+.\.venv\Scripts\python.exe scripts\run_pipeline.py --all
+
+# Stage 10: summary stats + histograms from results/apples_3d.csv
+.\.venv\Scripts\python.exe scripts\stage10_summary.py
+
+# Stage 10: PLY point clouds + 2D overlays for 5 example trees
+.\.venv\Scripts\python.exe scripts\stage10_point_clouds.py
 ```
 
 Run `.\.venv\Scripts\python.exe -m pytest tests\ -v` to run the full test
@@ -120,12 +141,24 @@ test split (rows never seen in training/validation at all):
 Test scores are lower than val on every metric — reported as the real,
 honest generalisation gap (some val rows were seen repeatedly during
 development; test rows never were), not retuned away, per the brief's
-"no tuning after the final test evaluation" rule. Full tables in
-`results/`; the complete narrative (including a tried-and-reverted
-experiment, corrected mistakes, the error analysis, and the Stage 9
-decision table) is in `EXPERIMENTS.md`, `docs/stage-6-notes.md`,
-`docs/stage-8-notes.md`, and `docs/stage-9-notes.md`. Only Stage 10 (full
-inference over all 544 trees + final deliverables) remains.
+"no tuning after the final test evaluation" rule.
+
+**Stage 10 (full inference, all 544 trees):** 19,294 apples detected,
+0-94 per tree (median 36), 0.7% with no usable depth sample (correctly
+flagged, not fabricated). **100% of valid depths fall below the
+dataset's own stated 0.4m minimum capture distance** — the checkpoint-C1
+depth-scale limitation, now visible across the whole dataset, not just
+the labelled subset it was first found in
+(`results/stage10_summary.md`, `results/stage10_histograms.png`). Point
+clouds + overlays for 5 example trees in `results/point_clouds/`,
+deliberately including one tree with zero detections (checked by eye:
+genuinely no visible apples), not only clean examples.
+
+Full tables in `results/`; the complete narrative (including a
+tried-and-reverted experiment, corrected mistakes, the error analysis,
+and the Stage 9 decision table) is in `EXPERIMENTS.md`,
+`docs/stage-6-notes.md`, `docs/stage-8-notes.md`, `docs/stage-9-notes.md`,
+and `docs/stage-10-notes.md`.
 
 ## Known limitations
 
@@ -146,7 +179,9 @@ data/derived/   generated manifests, converted labels, overlays (raw data stays
 docs/           one plain-language note per stage, the worked 3D example,
                 limitations.md, ai_use_log.md
 EXPERIMENTS.md  narrative log of every experiment, including failed ones
-results/        metric tables, the learning curve, per-run markdown summaries
+results/        apples_3d.csv (the final deliverable: every detected apple,
+                all 544 trees), metric tables, the learning curve, per-run
+                markdown summaries, point_clouds/ (5 example trees)
 runs/           training run logs/plots (model weights are git-ignored) and
                 experiments.csv (commit hash + config + metrics per run)
 scripts/        one thin script per stage/task -- see "Running the pipeline" above
@@ -166,7 +201,11 @@ Every training/evaluation run is logged in `runs/experiments.csv` with
 its git commit hash, whether the tree was dirty when it ran, its config,
 and its seed (rule 4/5 of the brief) — `src/tracking.py`'s `record_run()`.
 `configs/splits.json` is frozen (committed once, refuses to be silently
-overwritten) so train/val/test membership never drifts between runs.
-Stage tags (`stage-1-done` through `stage-7-done`, `baseline-colour-v1`,
-`checkpoint-C2-resolved`) mark points where a stage's exit check passed —
+overwritten) so train/val/test membership never drifts between runs. The
+final test evaluation (`scripts/run_final_test_eval.py`) refuses outright
+to run on an uncommitted (dirty) working tree, so its logged commit hash
+is an unambiguous record of exactly what code produced it. Stage tags
+(`stage-1-done` through `stage-10-done`, `baseline-colour-v1`,
+`checkpoint-C2-resolved`, `model-v1`, `final-test-eval`) mark points
+where a stage's exit check passed or a checkpoint was confirmed —
 `git log --oneline --all` or `git tag` to see them all.
