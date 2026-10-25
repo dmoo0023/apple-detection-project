@@ -7,7 +7,7 @@ plainly). Each point is explained in full, with numbers and reasoning, in
 the stage notes and `EXPERIMENTS.md` linked below — this file is the
 compact version for pulling into a report, not a replacement for them.
 
-## Depth & geometry (checkpoints C1/C2)
+## Depth & geometry (checkpoint C1)
 
 - Depth scale (`0.001`, i.e. 1 raw unit = 1mm) is an accepted
   approximation, not a measured value — the original 16-bit depth source
@@ -21,13 +21,12 @@ compact version for pulling into a report, not a replacement for them.
   dataset's own stated 0.4-1.2m capture range (every matched apple
   currently falls in an "out of range" distance band in the evaluation
   tables). (`docs/stage-6-notes.md`, `docs/stage-8-notes.md`)
-- The pipeline reports each apple's visible *near-surface point*, not a
-  centre-corrected position (a deliberate scope decision at checkpoint
-  C2) — adds a known, un-corrected systematic bias of roughly one apple
-  radius (~3-4.5cm) toward the camera versus the true centre.
-  (`docs/stage-4-notes.md`)
-- Combined, the brief's "2-3cm of the true centre" target cannot be read
-  literally against any 3D number this project reports.
+- The 3D output is each apple's *front-centre point* (the point on its
+  camera-facing surface at its 2D centre), so it only exists for apples
+  the camera can see, and its accuracy is bounded by the depth scale and
+  intrinsics above. (`docs/stage-4-notes.md`)
+- Combined, the brief's "2-3cm" target cannot be verified in absolute
+  terms against any 3D number this project reports.
 - 3D error throughout is a **proxy**: no physical ground truth exists, so
   "3D error" means the distance between two points computed through the
   same geometry code (predicted circle vs. labelled circle) — not

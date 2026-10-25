@@ -21,7 +21,7 @@ isolation.
    stays in OneDrive; the code, environment and git history live outside it.
 2. Installed **PyTorch 2.11.0 with CUDA 12.8** (`+cu128` build), plus
    `torchvision`, `ultralytics` (YOLO), `opencv-python`, `numpy`, `pandas`,
-   `scipy`, `scikit-image`, `matplotlib`, `pyyaml`, `pytest`, and `open3d`.
+   `scipy`, `scikit-image`, `matplotlib`, `pyyaml` and `pytest`.
    The CUDA version matters: this machine has an RTX 5070, a newer GPU
    architecture ("Blackwell") that only recent PyTorch builds know how to
    generate instructions for. An older PyTorch build (e.g. CUDA 11.8) would

@@ -503,3 +503,21 @@ than undercounting "trees processed" by one. That tree was deliberately
 kept as one of the 5 example trees (checked by eye: genuinely no visible
 apples) rather than swapped for a cleaner-looking example. Full writeup:
 `docs/stage-10-notes.md`. Tagging `stage-10-done`.
+
+## Front-point cleanup and full rerun
+
+**Date:** 2026-10-25
+**What:** Geometry wording, tests and outputs now describe only the 3D
+front-centre point of each apple (no size/shape reconstruction anywhere);
+PLY point clouds replaced by a 3D graph report figure
+(`scripts/plot_apples_3d.py`). Everything downstream of training was
+rerun; no model was retrained (detection does not use depth).
+
+**Result:** 3D outputs unchanged (all 19,294 X/Y/Z values identical). The
+learning curve is now measured on one fixed 26-image val set for every
+point (previously a mix of 20- and 25-image val sets):
+F1 0.753 / 0.781 / 0.778 / 0.812 and mAP 0.742 / 0.779 / 0.806 / 0.830 at
+10 / 20 / 31 / 40 train images. Classical baseline on the same val set:
+F1 0.548, mAP 0.204. Stage 9 decision table numbers unchanged (it was
+already on the 26-image val set). See `docs/stage-8-notes.md` and
+`docs/stage-10-notes.md`.

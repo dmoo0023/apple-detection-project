@@ -1,7 +1,9 @@
 # 3D Apple Localisation Pipeline
 
-Detects apples in RGB-D images of orchard trees and estimates each
-apple's 3D position, for an automated picking application. Built
+Detects apples in RGB-D images of orchard trees and gives the 3D
+position of each apple's front-centre point (the point on its
+camera-facing surface at its 2D centre), for an automated picking
+application. Built
 following `agent_workflow.md`, the project brief this repo implements.
 
 **Status: all 10 stages complete.** YOLO (`model-v1`) was chosen at
@@ -82,6 +84,8 @@ labels to the raw data folder.
 # Stage 8: build the YOLO dataset folder, then train and evaluate
 .\.venv\Scripts\python.exe scripts\prepare_yolo_dataset.py
 .\.venv\Scripts\python.exe scripts\train_yolo.py --run-id <name> [--epochs N] [--batch N]
+# re-evaluate an existing run's saved weights on the current val set, no retraining
+.\.venv\Scripts\python.exe scripts\train_yolo.py --run-id <name> --eval-only
 
 # Stage 8: plot the learning curve from every logged run
 .\.venv\Scripts\python.exe scripts\plot_learning_curve.py
@@ -106,14 +110,15 @@ labels to the raw data folder.
 # Stage 10: summary stats + histograms from results/apples_3d.csv
 .\.venv\Scripts\python.exe scripts\stage10_summary.py
 
-# Stage 10: PLY point clouds + 2D overlays for 5 example trees
-.\.venv\Scripts\python.exe scripts\stage10_point_clouds.py
+# Stage 10: report figure -- 3D graph of the apples' front-centre points
+# (plus photo overlay, and the two side by side) for 5 example trees
+.\.venv\Scripts\python.exe scripts\plot_apples_3d.py [--tree-id R01U01 ...]
 ```
 
 Run `.\.venv\Scripts\python.exe -m pytest tests\ -v` to run the full test
 suite (50 tests as of this writing — unit tests for every geometry
-function, a synthetic-sphere accuracy check, the evaluation module's own
-exit check, and more).
+function, a synthetic depth-image accuracy check, the evaluation module's
+own exit check, and more).
 
 ### After adding more labels
 
@@ -136,7 +141,7 @@ test split (rows never seen in training/validation at all):
 |---|---|---|---|
 | F1 | 0.548 | 0.812 | **0.757** |
 | mAP@0.5 | 0.204 | 0.830 | **0.755** |
-| Count MAE (apples/image) | — | 2.96 | 4.55 |
+| Count MAE (apples/image) | 4.92 | 2.96 | 4.55 |
 
 Test scores are lower than val on every metric — reported as the real,
 honest generalisation gap (some val rows were seen repeatedly during
@@ -149,10 +154,11 @@ flagged, not fabricated). **100% of valid depths fall below the
 dataset's own stated 0.4m minimum capture distance** — the checkpoint-C1
 depth-scale limitation, now visible across the whole dataset, not just
 the labelled subset it was first found in
-(`results/stage10_summary.md`, `results/stage10_histograms.png`). Point
-clouds + overlays for 5 example trees in `results/point_clouds/`,
-deliberately including one tree with zero detections (checked by eye:
-genuinely no visible apples), not only clean examples.
+(`results/stage10_summary.md`, `results/stage10_histograms.png`). 3D
+graphs of the front-centre points (with matching photo overlays) for 5
+example trees in `results/figures/`, deliberately including one tree with
+zero detections (checked by eye: genuinely no visible apples), not only
+clean examples.
 
 Full tables in `results/`; the complete narrative (including a
 tried-and-reverted experiment, corrected mistakes, the error analysis,
@@ -164,11 +170,10 @@ and `docs/stage-10-notes.md`.
 
 See [`docs/limitations.md`](docs/limitations.md) for the full list.
 Headline items: 3D depth scale and camera intrinsics are documented
-approximations, not measurements (checkpoint C1); reported 3D positions
-are the apple's visible near-surface point, not a corrected centre, by
-deliberate scope decision (checkpoint C2) — so the brief's "2-3cm of the
-true centre" target cannot be read literally against any 3D number here;
-the dataset is red apples, single viewpoint, summer only.
+approximations, not measurements (checkpoint C1), so the brief's "2-3cm"
+target cannot be verified in absolute terms against any 3D number here;
+3D accuracy is a proxy (no physical ground truth); the dataset is red
+apples, single viewpoint, summer only.
 
 ## Repository structure
 
@@ -179,14 +184,15 @@ data/derived/   generated manifests, converted labels, overlays (raw data stays
 docs/           one plain-language note per stage, the worked 3D example,
                 limitations.md, ai_use_log.md
 EXPERIMENTS.md  narrative log of every experiment, including failed ones
-results/        apples_3d.csv (the final deliverable: every detected apple,
-                all 544 trees), metric tables, the learning curve, per-run
-                markdown summaries, point_clouds/ (5 example trees)
+results/        apples_3d.csv (the final deliverable: every detected apple's
+                front-centre point, all 544 trees), metric tables, the
+                learning curve, per-run markdown summaries, figures/ (3D
+                graphs for 5 example trees)
 runs/           training run logs/plots (model weights are git-ignored) and
                 experiments.csv (commit hash + config + metrics per run)
 scripts/        one thin script per stage/task -- see "Running the pipeline" above
 src/            the shared modules every script/stage calls into:
-                  geometry.py   - pixel+depth -> 3D (the one geometry code path)
+                  geometry.py   - 2D centre + depth -> 3D front-centre point (the one geometry code path)
                   evaluate.py   - matching + every metric (the one evaluation code path)
                   labels.py     - labelme <-> YOLO label conversion
                   classical.py  - the colour-masking detector

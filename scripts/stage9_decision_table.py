@@ -117,8 +117,8 @@ def main() -> int:
             f"{r['overall_median_error_3d_proxy_cm']:.2f} | {100*r['overall_within_2cm_frac']:.1f}% | "
             f"{100*r['overall_within_3cm_frac']:.1f}% | {r['sec_per_image']:.3f} | {r['robustness']} |"
         )
-    lines.append("\n**3D proxy numbers inherit both the checkpoint-C1 depth-scale approximation and the "
-                  "checkpoint-C2 surface-point bias — not literal centimetre accuracy against a physical apple, "
+    lines.append("\n**3D proxy numbers are distances between front-centre points and inherit the checkpoint-C1 "
+                  "depth-scale approximation — not literal centimetre accuracy against a physical apple, "
                   "see docs/limitations.md.**")
     report = "\n".join(lines)
     (out_dir / "stage9_decision_table.md").write_text(report + "\n", encoding="utf-8")

@@ -29,6 +29,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from matplotlib.ticker import MaxNLocator  # noqa: E402
 import pandas as pd  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -85,6 +86,7 @@ def draw_3d(ax, tree_apples: pd.DataFrame, tree_id: str) -> None:
     ax.set_zlabel("Y, down (m)", color=INK, labelpad=6)
     ax.tick_params(labelsize=7, colors=INK_MUTED)
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.set_major_locator(MaxNLocator(5))  # fewer ticks: labels don't run into each other
         axis.pane.set_facecolor(SURFACE)
         axis.pane.set_edgecolor("#e4e3df")
         axis._axinfo["grid"]["color"] = "#e4e3df"
@@ -96,7 +98,7 @@ def draw_3d(ax, tree_apples: pd.DataFrame, tree_id: str) -> None:
     note = f"{n_invalid} detection(s) with no usable depth not shown" if n_invalid else "all detections have usable depth"
     if valid.empty:
         note = "no apples detected on this tree"
-    ax.text2D(0.5, -0.04, note, transform=ax.transAxes, ha="center", fontsize=7, color=INK_MUTED)
+    ax.text2D(0.5, -0.12, note, transform=ax.transAxes, ha="center", fontsize=7, color=INK_MUTED)
 
 
 def draw_overlay(ax, rgb: np.ndarray, tree_apples: pd.DataFrame, tree_id: str) -> None:

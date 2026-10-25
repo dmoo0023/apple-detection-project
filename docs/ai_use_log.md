@@ -457,3 +457,28 @@ current status. Tagged `stage-10-done`. 50/50 tests pass throughout.
 **Checkpoint C4** (final outputs and README): waiting on the student.
 
 **Student review notes:**
+
+## Front-point cleanup and full rerun — 2026-10-25
+
+**Asked:** remove every trace of reconstructing the apple's size or shape,
+so depth is only used to show the centre point of the front of each apple
+in 3D; add a 3D graph of those points for the report; then "rerun
+everything".
+
+**Produced:** `src/geometry.py`'s 3D function renamed to
+`apple_front_point_3d()` with all centre-correction / sphere-fit wording
+removed (the numbers it produces did not change); the synthetic-sphere
+tests replaced by a synthetic depth-image test (within 1 mm, and within
+2 mm with 2 mm noise); the PLY point clouds, `stage10_point_clouds.py`
+and `open3d` removed; `radius_px` dropped from `results/apples_3d.csv`;
+new `scripts/plot_apples_3d.py` report figure (`results/figures/`); new
+`train_yolo.py --eval-only` to re-evaluate saved weights without
+retraining. Reran Stages 1-2, the classical baseline, all four YOLO val
+evaluations, the learning curve, the Stage 9 decision table, error
+analysis, the full 544-tree pipeline and the summary. X/Y/Z for all
+19,294 apples are identical to the previous run. The saved val summaries
+had been computed on older, smaller val sets (20-25 images); they and the
+learning curve are now all on the same 26-image val set. Docs and README
+updated. No retraining. 50/50 tests pass.
+
+**Student review notes:**

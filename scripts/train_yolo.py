@@ -10,6 +10,7 @@ Run with: .venv\\Scripts\\python.exe scripts\\train_yolo.py [--run-id ID] [--epo
 """
 
 import argparse
+import ast
 import json
 import sys
 from pathlib import Path
@@ -40,6 +41,23 @@ def load_gt(image_ids: list[str]) -> list[Apple2D]:
     apples_df = pd.read_csv(load_paths()["derived_dir"] / "apples_2d.csv")
     apples_df = apples_df[apples_df["image_id"].isin(image_ids)]
     return [Apple2D(row.image_id, row.cx, row.cy, row.radius_px) for row in apples_df.itertuples()]
+
+
+def logged_n_train_images(run_id: str) -> int | None:
+    """The train-image count this run was trained on, from its latest training entry in
+    runs/experiments.csv (an --eval-only re-evaluation doesn't change it)."""
+    csv_path = REPO_ROOT / "runs" / "experiments.csv"
+    if not csv_path.exists():
+        return None
+    df = pd.read_csv(csv_path)
+    n = None
+    for config_str in df.loc[df["run_id"] == run_id, "config"]:
+        try:
+            config = ast.literal_eval(config_str)
+        except (ValueError, SyntaxError):
+            continue
+        n = config.get("n_train_images", n)
+    return n
 
 
 def load_depth_m(image_id: str, scale: float) -> np.ndarray:
@@ -140,6 +158,9 @@ def evaluate_on_val(args: argparse.Namespace, best_weights: Path) -> int:
     det = summary["detection"]
     if args.eval_only:
         config = {"model": args.model, "nms_iou": args.iou, "note": "re-evaluated existing weights (--eval-only)"}
+        n_train = logged_n_train_images(args.run_id)
+        if n_train is not None:  # keeps this run on the learning curve, now on the current val set
+            config["n_train_images"] = n_train
     else:
         config = {"model": args.model, "epochs": args.epochs, "batch": args.batch, "imgsz": 640,
                   "nms_iou": args.iou, "lr0": args.lr0, "cos_lr": args.cos_lr, "mosaic": args.mosaic,
