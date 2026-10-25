@@ -15,9 +15,7 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-from PIL import Image
 from ultralytics import YOLO
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -31,6 +29,7 @@ from src.evaluate import (  # noqa: E402
     summary_to_markdown,
 )
 from src.geometry import Intrinsics  # noqa: E402
+from src.pairing import load_depth_m  # noqa: E402
 from src.tracking import RunRecord, record_run  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -59,14 +58,6 @@ def logged_n_train_images(run_id: str) -> int | None:
             continue
         n = config.get("n_train_images", n)
     return n
-
-
-def load_depth_m(image_id: str, scale: float) -> np.ndarray:
-    """Load the depth image paired with `image_id`, converted to metres with `scale`."""
-    paths = load_paths()
-    depth_name = image_id.replace("_RGB-", "_D-")
-    raw = np.array(Image.open(paths["depth_dir"] / f"{depth_name}.png").convert("L")).astype(float)
-    return raw * scale
 
 
 def main() -> int:

@@ -71,7 +71,22 @@ scripts below recreate them.
 
 Checks every RGB/depth pair, file name and label file, and writes
 `data/derived/manifest.csv` and `path_report.md`. Should end with
-"Exit check: PASS".
+"Exit check: PASS"; the script exits with code 1 if it doesn't.
+
+Every tree gets a `pair_status` in the manifest (`src/pairing.py`): `ok`,
+`missing_rgb`, `missing_depth`, or `ambiguous` (two files claim the same
+tree, e.g. a typo in the row/unit number; the clashing path is left blank
+rather than guessed). Files whose names break the naming pattern, duplicate
+tree IDs, case clashes and double extensions all fail the exit check. Every
+later stage takes file paths from the manifest, never by rebuilding names,
+so after a failed audit nothing crashes or pairs the wrong files:
+
+- a tree with no usable depth file is still detected, and each detection is
+  marked invalid with `invalid_reason = "no depth file"`;
+- a tree with no usable RGB file is skipped and listed at the end of the run;
+- in evaluation, an image with no depth file simply has no 3D error.
+
+Fix the file names and rerun the audit before trusting results.
 
 ### 2. Convert labels (Stage 2)
 
@@ -198,7 +213,7 @@ final test evaluation.
 
 ## Tests and test report
 
-The test suite has 49 tests: unit tests for every geometry function, a
+The test suite has 60 tests: unit tests for every geometry function, a
 synthetic depth-image accuracy check, the evaluation module's own exit
 check, and more. Run it with `& $py -m pytest tests -v`. The latest
 report is in [`docs/test_report.html`](docs/test_report.html) (open it in
@@ -263,6 +278,7 @@ scripts/        one thin script per stage/task -- see "Running the pipeline" abo
 src/            the shared modules every script/stage calls into:
                   geometry.py   - 2D centre + depth -> 3D front-centre point (the one geometry code path)
                   evaluate.py   - matching + every metric (the one evaluation code path)
+                  pairing.py    - file-name parsing, RGB/depth pairing, manifest reading
                   labels.py     - labelme <-> YOLO label conversion
                   classical.py  - the colour-masking detector
                   config.py     - loads configs/*.yaml (no path is ever hard-coded)

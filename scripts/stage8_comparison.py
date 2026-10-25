@@ -29,10 +29,11 @@ from ultralytics import YOLO
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
-from scripts.train_yolo import load_depth_m, load_gt  # noqa: E402
+from scripts.train_yolo import load_gt  # noqa: E402
 from src.config import load_camera  # noqa: E402
 from src.evaluate import Apple2D, match_all, per_match_errors, summarise  # noqa: E402
 from src.geometry import Intrinsics  # noqa: E402
+from src.pairing import load_depth_m  # noqa: E402
 
 BASELINE = "model-v1-40train"
 N_TRAIN_IMAGES = 40  # every Stage 8 run trained on the same 40 labelled train images (runs/experiments.csv)

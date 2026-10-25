@@ -23,6 +23,7 @@ from src.classical import ClassicalConfig, detect_apples  # noqa: E402
 from src.config import load_paths, load_camera  # noqa: E402
 from src.evaluate import Apple2D, match_all, per_match_errors, summarise  # noqa: E402
 from src.geometry import Intrinsics  # noqa: E402
+from src.pairing import load_depth_m  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -47,14 +48,6 @@ def load_gt(image_ids: list[str]) -> list[Apple2D]:
 def load_rgb(image_id: str) -> np.ndarray:
     """Load one RGB image as an (H, W, 3) uint8 array."""
     return np.array(Image.open(load_paths()["rgb_dir"] / f"{image_id}.png").convert("RGB"))
-
-
-def load_depth_m(image_id: str, scale: float) -> np.ndarray:
-    """Load the depth image paired with `image_id`, converted to metres with `scale`."""
-    paths = load_paths()
-    depth_name = image_id.replace("_RGB-", "_D-")
-    raw = np.array(Image.open(paths["depth_dir"] / f"{depth_name}.png").convert("L")).astype(float)
-    return raw * scale
 
 
 def main() -> int:
