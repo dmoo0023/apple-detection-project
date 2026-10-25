@@ -66,7 +66,7 @@ def main() -> int:
 
     fig.tight_layout()
     fig.savefig(results_dir / "stage10_histograms.png", dpi=120)
-    print(f"\nWrote results/stage10_summary.md and results/stage10_histograms.png")
+    print("\nWrote results/stage10_summary.md and results/stage10_histograms.png")
     return 0
 
 

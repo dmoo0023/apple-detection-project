@@ -122,7 +122,7 @@ def main() -> int:
         log(f"- test split currently has only {test_labelled} labelled images. "
             f"Recommend labelling at least {needed} more from the test split to reach "
             f"the low end of the target ({TEST_LABEL_TARGET_LOW}).")
-        log(f"- suggested trees to label next (from test split, unlabelled, in tree-ID order):")
+        log("- suggested trees to label next (from test split, unlabelled, in tree-ID order):")
         log(f"  {recommended}")
         log("- note: these are **test** images — per rule 3, do not look at their predictions "
             "or metrics until the Stage 9 final evaluation, only label them.")

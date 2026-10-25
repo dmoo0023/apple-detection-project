@@ -130,6 +130,7 @@ class _Boxes:
     """Stand-in for Ultralytics' Boxes: one box per (x0, y0, x1, y1, conf)."""
 
     def __init__(self, boxes: list[tuple[float, float, float, float, float]]) -> None:
+        """Keep the fixed detections, each as (x0, y0, x1, y1, confidence)."""
         self._boxes = boxes
 
     def __iter__(self):
@@ -142,6 +143,7 @@ class _StubModel:
     """Stand-in for a YOLO model that always returns the same detections."""
 
     def __init__(self, boxes: list[tuple[float, float, float, float, float]]) -> None:
+        """Keep the fixed detections, each as (x0, y0, x1, y1, confidence)."""
         self._boxes = boxes
 
     def predict(self, *args, **kwargs) -> list:

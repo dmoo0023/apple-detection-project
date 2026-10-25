@@ -11,7 +11,6 @@ Run with: .venv\\Scripts\\python.exe scripts\\train_yolo.py [--run-id ID] [--epo
 
 import argparse
 import ast
-import json
 import sys
 from pathlib import Path
 
@@ -24,7 +23,6 @@ from src.evaluate import (  # noqa: E402
     Apple2D,
     match_all,
     per_match_errors,
-    precision_recall_f1,
     summarise,
     summary_to_markdown,
 )
