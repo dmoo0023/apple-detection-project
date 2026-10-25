@@ -138,6 +138,7 @@ training, error analysis, method comparison, final test, 3D output), with
 a README describing every file. Rebuild it after rerunning any stage with:
 
 ```powershell
+.\.venv\Scripts\python.exe scripts\optimisation_figures.py    # optimisation-section figures/tables
 .\.venv\Scripts\python.exe scripts\collect_report_assets.py
 ```
 

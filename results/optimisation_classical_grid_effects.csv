@@ -1,0 +1,11 @@
+parameter,level,mean_f1,min_f1,max_f1,n_configs,best_config_level
+hue_low_max,8,0.4652,0.3526,0.5146,16,True
+hue_low_max,12,0.4619,0.3578,0.5144,16,False
+hue_high_min,165,0.4687,0.3526,0.5146,16,True
+hue_high_min,172,0.4584,0.3754,0.4974,16,False
+sat_min,50,0.4304,0.3526,0.499,16,False
+sat_min,90,0.4967,0.4752,0.5146,16,True
+val_min,30,0.4627,0.3526,0.5122,16,False
+val_min,60,0.4644,0.3584,0.5146,16,True
+lab_a_min,135,0.4352,0.3526,0.5146,16,True
+lab_a_min,155,0.4919,0.4814,0.5057,16,False
