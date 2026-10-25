@@ -20,6 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> int:
+    """Save label-vs-detection overlays (red = label, green = detection) for one YOLO run. Returns 0."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", default="model-v1-first-fit")
     parser.add_argument("-n", type=int, default=5)

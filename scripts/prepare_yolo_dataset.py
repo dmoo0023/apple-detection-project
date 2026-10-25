@@ -54,6 +54,7 @@ def build_split(split: str, image_ids: list[str], rgb_dir: Path, labels_det_dir:
 
 
 def main() -> int:
+    """Build the Ultralytics dataset folder (labelled train/val images + labels) and configs/yolo_data.yaml. Returns 0."""
     paths = load_paths()
     manifest = pd.read_csv(paths["manifest_csv"])
     splits = json.loads((REPO_ROOT / "configs" / "splits.json").read_text(encoding="utf-8"))

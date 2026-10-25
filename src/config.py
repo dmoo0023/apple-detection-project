@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _load_yaml(relative_path: str) -> dict:
+    """Read one YAML file, given relative to the repository root, into a dict."""
     full_path = REPO_ROOT / relative_path
     with open(full_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)

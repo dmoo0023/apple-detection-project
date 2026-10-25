@@ -27,6 +27,7 @@ CONST_DEPTH_M = 0.70
 
 
 def make_gt(image_id: str = "img1") -> list[Apple2D]:
+    """Return three labelled apples in one image, with known centres and radii."""
     return [
         Apple2D(image_id, cx=200.0, cy=150.0, radius_px=20.0),
         Apple2D(image_id, cx=400.0, cy=300.0, radius_px=15.0),
@@ -35,12 +36,14 @@ def make_gt(image_id: str = "img1") -> list[Apple2D]:
 
 
 def make_depth_lookup(image_ids: list[str]) -> dict[str, np.ndarray]:
+    """Return a constant-depth image for each image ID."""
     return {iid: np.full((480, 640), CONST_DEPTH_M, dtype=float) for iid in image_ids}
 
 
 # --- trivial predictor: predictions == labels -------------------------------
 
 def test_trivial_predictor_scores_perfectly() -> None:
+    """Stage 5 exit check: predictions equal to the labels score perfectly on every metric."""
     gt = make_gt()
     pred = [Apple2D(a.image_id, a.cx, a.cy, a.radius_px, score=1.0) for a in gt]
     depth_lookup = make_depth_lookup(["img1"])
@@ -74,6 +77,7 @@ def test_trivial_predictor_scores_perfectly() -> None:
 # --- apple-count accuracy ----------------------------------------------------
 
 def test_count_accuracy_trivial_predictor_zero_error() -> None:
+    """A perfect predictor has zero count error."""
     gt = make_gt("img1") + make_gt("img2")
     pred = [Apple2D(a.image_id, a.cx, a.cy, a.radius_px) for a in gt]
     result = count_accuracy(gt, pred)
@@ -84,6 +88,7 @@ def test_count_accuracy_trivial_predictor_zero_error() -> None:
 
 
 def test_count_accuracy_detects_systematic_undercounting() -> None:
+    """Always finding one apple too few shows up as count MAE 1 and bias -1."""
     # 2 images, 3 gt apples each; predictor always finds only 2 (drops one, regardless of
     # which one, or even whether the 2 it keeps are correctly localised).
     gt = make_gt("img1") + make_gt("img2")
@@ -100,6 +105,7 @@ def test_count_accuracy_detects_systematic_undercounting() -> None:
 
 
 def test_count_accuracy_handles_image_with_no_gt_or_pred() -> None:
+    """An image with predictions but no labels is still counted, not dropped."""
     gt = [Apple2D("img1", 10, 10, 5)]
     pred = [Apple2D("img1", 10, 10, 5), Apple2D("img2", 50, 50, 5)]  # img2: pure false positives, no gt at all
     result = count_accuracy(gt, pred)
@@ -113,6 +119,7 @@ def test_count_accuracy_handles_image_with_no_gt_or_pred() -> None:
 # --- deliberately shifted copy: expected, predictable error -----------------
 
 def test_shifted_copy_gives_expected_2d_error() -> None:
+    """Stage 5 exit check: a known (3, 4) px shift gives exactly 5 px of 2D error and the matching cm error."""
     gt = make_gt()
     dx, dy = 3.0, 4.0  # 3-4-5 shift (5px), comfortably under every gt radius's 0.5*r threshold (10, 7.5, 12.5)
     pred = [Apple2D(a.image_id, a.cx + dx, a.cy + dy, a.radius_px, score=1.0) for a in gt]
@@ -136,6 +143,7 @@ def test_shifted_copy_gives_expected_2d_error() -> None:
 
 
 def test_shift_beyond_threshold_breaks_the_match() -> None:
+    """A shift beyond 0.5 x the labelled radius is not a match (one FP, one FN)."""
     gt = [Apple2D("img1", cx=200.0, cy=150.0, radius_px=20.0)]  # threshold = 0.5*20 = 10px
     pred = [Apple2D("img1", cx=235.0, cy=150.0, radius_px=20.0)]  # 35px shift, well past the threshold
 
@@ -147,6 +155,7 @@ def test_shift_beyond_threshold_breaks_the_match() -> None:
 
 
 def test_missing_prediction_counts_as_false_negative() -> None:
+    """A missing prediction counts as a false negative."""
     gt = make_gt()
     pred = [Apple2D(a.image_id, a.cx, a.cy, a.radius_px) for a in gt[:2]]  # drop the 3rd apple
     matches = match_all(gt, pred)
@@ -159,6 +168,7 @@ def test_missing_prediction_counts_as_false_negative() -> None:
 
 
 def test_summarise_reports_out_of_range_band_not_silently() -> None:
+    """Depths outside every distance band are reported as 'out_of_range', not silently dropped."""
     # every DISTANCE_BANDS entry is >= 0.4m; a depth below that must still show up
     # in the report as "out_of_range", not just vanish from the per-band table.
     assert all(lo >= 0.4 for lo, hi in DISTANCE_BANDS)
@@ -176,6 +186,7 @@ def test_summarise_reports_out_of_range_band_not_silently() -> None:
 
 
 def test_extra_prediction_counts_as_false_positive() -> None:
+    """An extra prediction counts as a false positive."""
     gt = make_gt()
     pred = [Apple2D(a.image_id, a.cx, a.cy, a.radius_px) for a in gt]
     pred.append(Apple2D("img1", cx=500.0, cy=50.0, radius_px=10.0))  # spurious extra detection

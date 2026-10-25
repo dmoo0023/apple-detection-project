@@ -16,6 +16,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 
 def main() -> int:
+    """Write results/stage10_summary.md and the apples-per-tree / depth histograms. Returns 0."""
     from src.config import load_paths
 
     df = pd.read_csv(REPO_ROOT / "results" / "apples_3d.csv")

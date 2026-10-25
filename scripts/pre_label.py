@@ -32,6 +32,7 @@ DEFAULT_BATCH_SIZE = 50
 
 
 def main() -> int:
+    """Pre-label unlabelled train images with the classical detector as labelme JSON for review. Returns 0, or 1 if no tuned config exists."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     args = parser.parse_args()

@@ -149,6 +149,7 @@ def circle_to_polygon(cx: float, cy: float, radius: float, n_points: int = 16) -
 
 
 def _clip(value: float, lo: float, hi: float) -> float:
+    """Clamp `value` to the range [lo, hi]."""
     return max(lo, min(hi, value))
 
 

@@ -38,6 +38,7 @@ DEFAULT_SEED = 42
 
 
 def load_gt(image_ids: list[str]) -> list[Apple2D]:
+    """Load the labelled circles for the given images from apples_2d.csv."""
     apples_df = pd.read_csv(load_paths()["derived_dir"] / "apples_2d.csv")
     apples_df = apples_df[apples_df["image_id"].isin(image_ids)]
     return [Apple2D(row.image_id, row.cx, row.cy, row.radius_px) for row in apples_df.itertuples()]
@@ -61,6 +62,7 @@ def logged_n_train_images(run_id: str) -> int | None:
 
 
 def load_depth_m(image_id: str, scale: float) -> np.ndarray:
+    """Load the depth image paired with `image_id`, converted to metres with `scale`."""
     paths = load_paths()
     depth_name = image_id.replace("_RGB-", "_D-")
     raw = np.array(Image.open(paths["depth_dir"] / f"{depth_name}.png").convert("L")).astype(float)
@@ -68,6 +70,7 @@ def load_depth_m(image_id: str, scale: float) -> np.ndarray:
 
 
 def main() -> int:
+    """Train a YOLO model (or, with --eval-only, reuse its saved weights) and evaluate it on val. Returns 0, or 1 if inputs are missing."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", default="model-v1-first-fit")
     parser.add_argument("--epochs", type=int, default=100)

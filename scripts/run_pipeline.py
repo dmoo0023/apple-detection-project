@@ -31,12 +31,18 @@ CHOSEN_RUN_ID = "model-v1-40train"  # the config tagged model-v1, confirmed at c
 
 
 def load_depth_m(depth_path: Path, scale: float) -> np.ndarray:
+    """Load a depth PNG and convert it to metres with `scale`."""
     raw = np.array(Image.open(depth_path).convert("L")).astype(float)
     return raw * scale
 
 
 def process_tree(tree_id: str, rgb_path: Path, depth_path: Path, model: YOLO, intr: Intrinsics,
                   scale: float, iou: float) -> list[dict]:
+    """Detect apples in one tree's RGB image and compute each one's 3D front-centre point.
+
+    Returns one dict per detection: tree_id, apple_index, u, v (pixels), X, Y, Z
+    (metres, None if depth is unusable), depth_pixels_used, is_valid, confidence.
+    """
     depth_m = load_depth_m(depth_path, scale)
     pred = model.predict(str(rgb_path), verbose=False, device=0, iou=iou)[0]
 
@@ -65,6 +71,7 @@ def process_tree(tree_id: str, rgb_path: Path, depth_path: Path, model: YOLO, in
 
 
 def main() -> int:
+    """Run the pipeline on one tree or all 544 and write results/apples_3d.csv. Returns 0, or 1 for an unknown tree ID."""
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--tree-id", help="process a single tree, e.g. R01U01")

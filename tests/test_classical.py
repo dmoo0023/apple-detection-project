@@ -23,12 +23,14 @@ BG_RGB = (90, 60, 30)       # dull brown background/soil
 
 
 def blank_image(w=200, h=200, rgb=BG_RGB) -> np.ndarray:
+    """Return a w x h image filled with one RGB colour (soil-brown background by default)."""
     img = np.zeros((h, w, 3), dtype=np.uint8)
     img[:] = rgb
     return img
 
 
 def test_fit_circle_to_contour_recovers_known_circle() -> None:
+    """The circle fit recovers the centre and radius of points sampled on a known circle."""
     cx, cy, r = 50.3, 40.7, 15.2
     angles = np.linspace(0, 2 * np.pi, 32, endpoint=False)
     points = np.stack([cx + r * np.cos(angles), cy + r * np.sin(angles)], axis=1)
@@ -41,10 +43,12 @@ def test_fit_circle_to_contour_recovers_known_circle() -> None:
 
 
 def test_fit_circle_to_contour_too_few_points_returns_none() -> None:
+    """The circle fit returns None when given too few points."""
     assert fit_circle_to_contour(np.array([[0, 0], [1, 1]])) is None
 
 
 def test_segment_red_mask_detects_red_rejects_green_and_background() -> None:
+    """The red mask keeps a red disc and rejects a green leaf and the background."""
     img = blank_image()
     cv2.circle(img, (100, 100), 20, APPLE_RGB, -1)
     cv2.circle(img, (40, 40), 15, LEAF_RGB, -1)
@@ -56,6 +60,7 @@ def test_segment_red_mask_detects_red_rejects_green_and_background() -> None:
 
 
 def test_clean_mask_removes_small_speckle() -> None:
+    """Morphological clean-up removes a 1-pixel speckle but keeps a real blob."""
     mask = np.zeros((100, 100), dtype=np.uint8)
     mask[50:70, 50:70] = 255  # a real 20x20 blob
     mask[10, 10] = 255        # a 1px speckle, should be removed by opening
@@ -65,6 +70,7 @@ def test_clean_mask_removes_small_speckle() -> None:
 
 
 def test_detect_apples_single_isolated_apple() -> None:
+    """One isolated red apple gives exactly one detection at the right place and size."""
     img = blank_image()
     cv2.circle(img, (100, 90), 18, APPLE_RGB, -1)
 
@@ -77,6 +83,7 @@ def test_detect_apples_single_isolated_apple() -> None:
 
 
 def test_detect_apples_separates_two_touching_apples() -> None:
+    """Watershed splits two touching apples into two detections."""
     img = blank_image(w=260, h=160)
     # two apples touching (distance between centres < sum of radii)
     cv2.circle(img, (100, 80), 25, APPLE_RGB, -1)
@@ -94,6 +101,7 @@ HIGHLIGHT_APPLE_RGB = (230, 120, 60)  # bright, orange-shifted -- an apple in di
 
 
 def test_primary_variant_alone_misses_shadow_and_highlight_apples() -> None:
+    """With only the primary thresholds, shaded and highlighted apples are missed."""
     img = blank_image()
     cv2.circle(img, (100, 100), 15, SHADOW_APPLE_RGB, -1)
     cv2.circle(img, (60, 60), 15, HIGHLIGHT_APPLE_RGB, -1)
@@ -104,6 +112,7 @@ def test_primary_variant_alone_misses_shadow_and_highlight_apples() -> None:
 
 
 def test_shadow_variant_catches_dark_desaturated_red() -> None:
+    """The shadow variant detects dark, desaturated red skin."""
     img = blank_image()
     cv2.circle(img, (100, 100), 15, SHADOW_APPLE_RGB, -1)
     mask = segment_red_mask(img, ClassicalConfig(use_shadow_variant=True, use_highlight_variant=False))
@@ -111,6 +120,7 @@ def test_shadow_variant_catches_dark_desaturated_red() -> None:
 
 
 def test_highlight_variant_catches_bright_orange_shifted_red() -> None:
+    """The highlight variant detects bright, orange-shifted red skin."""
     img = blank_image()
     cv2.circle(img, (100, 100), 15, HIGHLIGHT_APPLE_RGB, -1)
     mask = segment_red_mask(img, ClassicalConfig(use_shadow_variant=False, use_highlight_variant=True))
@@ -118,6 +128,7 @@ def test_highlight_variant_catches_bright_orange_shifted_red() -> None:
 
 
 def test_shadow_and_highlight_variants_still_reject_background() -> None:
+    """Enabling both extra variants still rejects leaves and soil."""
     img = blank_image()
     cv2.circle(img, (100, 100), 15, LEAF_RGB, -1)
     config = ClassicalConfig(use_shadow_variant=True, use_highlight_variant=True)
@@ -127,6 +138,7 @@ def test_shadow_and_highlight_variants_still_reject_background() -> None:
 
 
 def test_detect_apples_finds_shaded_apple_end_to_end() -> None:
+    """A shaded apple is found end to end when the shadow variant is on."""
     img = blank_image()
     cv2.circle(img, (100, 90), 18, SHADOW_APPLE_RGB, -1)
     detections = detect_apples(img, ClassicalConfig(use_shadow_variant=True))
@@ -136,6 +148,7 @@ def test_detect_apples_finds_shaded_apple_end_to_end() -> None:
 
 
 def test_detect_apples_ignores_pure_background() -> None:
+    """An image with only leaves and soil gives no detections."""
     img = blank_image()
     cv2.circle(img, (60, 60), 20, LEAF_RGB, -1)
     detections = detect_apples(img, ClassicalConfig())

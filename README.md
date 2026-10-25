@@ -115,10 +115,31 @@ labels to the raw data folder.
 .\.venv\Scripts\python.exe scripts\plot_apples_3d.py [--tree-id R01U01 ...]
 ```
 
+## Tests and test report
+
 Run `.\.venv\Scripts\python.exe -m pytest tests\ -v` to run the full test
 suite (50 tests as of this writing — unit tests for every geometry
 function, a synthetic depth-image accuracy check, the evaluation module's
 own exit check, and more).
+
+The latest test report is in
+[`docs/test_report.html`](docs/test_report.html) (open it in a browser).
+Regenerate it with:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests -v --html=docs\test_report.html --self-contained-html
+```
+
+## Code documentation
+
+HTML documentation of every module, class and function in `src/` and
+`scripts/` (built from their docstrings with [pdoc](https://pdoc.dev)) is
+in [`docs/api/`](docs/api/index.html) — open `docs/api/index.html` in a
+browser. Regenerate it after changing any docstring with:
+
+```powershell
+.\.venv\Scripts\pdoc.exe src scripts -o docs\api --footer-text "3D apple localisation pipeline"
+```
 
 ### After adding more labels
 
@@ -182,7 +203,8 @@ configs/        camera.yaml, paths.yaml, splits.json (frozen), yolo_data.yaml
 data/derived/   generated manifests, converted labels, overlays (raw data stays
                 at raw_data_root, never copied in)
 docs/           one plain-language note per stage, the worked 3D example,
-                limitations.md, ai_use_log.md
+                limitations.md, ai_use_log.md, api/ (HTML code documentation),
+                test_report.html (pytest report)
 EXPERIMENTS.md  narrative log of every experiment, including failed ones
 results/        apples_3d.csv (the final deliverable: every detected apple's
                 front-centre point, all 544 trees), metric tables, the
@@ -212,6 +234,19 @@ final test evaluation (`scripts/run_final_test_eval.py`) refuses outright
 to run on an uncommitted (dirty) working tree, so its logged commit hash
 is an unambiguous record of exactly what code produced it. Stage tags
 (`stage-1-done` through `stage-10-done`, `baseline-colour-v1`,
-`checkpoint-C2-resolved`, `model-v1`, `final-test-eval`) mark points
-where a stage's exit check passed or a checkpoint was confirmed —
-`git log --oneline --all` or `git tag` to see them all.
+`checkpoint-C2-resolved`, `model-v1`, `final-test-eval`, and
+`final-test-eval-front-point` for the identical rerun after the
+front-centre-point cleanup) mark points where a stage's exit check passed
+or a checkpoint was confirmed — `git log --oneline --all` or `git tag` to
+see them all.
+
+## Licence
+
+Copyright (C) 2026 moodyyyyyy (dmoo0023, Monash University).
+
+This project is licensed under the **GNU Affero General Public License
+v3.0** — see [`LICENSE`](LICENSE). AGPL-3.0 was chosen because the
+pipeline is built on [Ultralytics YOLO](https://github.com/ultralytics/ultralytics),
+which is itself AGPL-3.0; code that uses it is distributed under the same
+terms. The raw dataset is not part of this repository and is not covered
+by this licence.

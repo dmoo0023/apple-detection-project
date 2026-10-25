@@ -25,6 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> int:
+    """Save false-negative/false-positive overlays and a CSV for one YOLO run on val. Returns 0."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", default="model-v1-40train")
     parser.add_argument("--iou", type=float, default=0.3)

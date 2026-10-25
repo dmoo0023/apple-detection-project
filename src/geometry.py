@@ -41,6 +41,7 @@ class Intrinsics:
 
     @classmethod
     def from_dict(cls, d: dict) -> "Intrinsics":
+        """Build Intrinsics from a dict with fx, fy, cx, cy keys (e.g. configs/camera.yaml)."""
         return cls(fx=d["fx"], fy=d["fy"], cx=d["cx"], cy=d["cy"])
 
 

@@ -41,6 +41,15 @@ def refuse_if_dirty(context: str) -> None:
 
 @dataclass
 class RunRecord:
+    """One row of runs/experiments.csv.
+
+    Attributes:
+      run_id: experiment name, e.g. 'model-v1-40train'.
+      stage: workflow stage, e.g. 'stage-8'.
+      seed: random seed used, or None if not applicable.
+      config: the settings that define the run.
+      metrics_summary: one-line human-readable result.
+    """
     run_id: str
     stage: str
     seed: int | None

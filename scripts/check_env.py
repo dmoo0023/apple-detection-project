@@ -8,6 +8,7 @@ import platform
 
 
 def main() -> int:
+    """Print package versions and run a small GPU matmul. Returns 0 if the GPU works, else 1."""
     print("Python:", sys.version.split()[0], "(" + platform.platform() + ")")
 
     import torch

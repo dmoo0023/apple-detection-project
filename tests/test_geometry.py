@@ -23,12 +23,14 @@ INTR = Intrinsics(fx=600.0, fy=600.0, cx=320.0, cy=240.0)
 
 
 def test_backproject_known_point() -> None:
+    """A pixel at the principal point back-projects onto the optical axis (X = Y = 0)."""
     # a point straight ahead of the camera at depth 1m should land at X=Y=0
     xyz = backproject(INTR.cx, INTR.cy, 1.0, INTR)
     assert xyz == pytest.approx([0.0, 0.0, 1.0], abs=1e-9)
 
 
 def test_backproject_reprojects_to_the_same_pixel() -> None:
+    """Back-projecting then projecting again returns the original pixel."""
     u, v, z = 450.0, 100.0, 0.8
     xyz = backproject(u, v, z, INTR)
     u_rt = INTR.fx * xyz[0] / xyz[2] + INTR.cx
@@ -38,6 +40,7 @@ def test_backproject_reprojects_to_the_same_pixel() -> None:
 
 
 def test_robust_depth_missing_returns_none_with_reason() -> None:
+    """An all-zero depth patch gives None plus a reason, never a zero depth."""
     depth = np.zeros((480, 640), dtype=float)  # all invalid (zero) pixels
     result = robust_depth(depth, cx=320, cy=240, radius_px=20)
     assert result.depth_m is None
@@ -46,6 +49,7 @@ def test_robust_depth_missing_returns_none_with_reason() -> None:
 
 
 def test_robust_depth_median_ignores_outliers() -> None:
+    """One wild outlier pixel does not move the median depth."""
     depth = np.full((480, 640), 0.80, dtype=float)
     depth[235:245, 315:325] = 0.80  # consistent patch
     depth[238, 318] = 5.0  # one wild outlier pixel inside the sampled disc
@@ -55,6 +59,7 @@ def test_robust_depth_median_ignores_outliers() -> None:
 
 
 def test_front_point_missing_depth_is_none_not_zero() -> None:
+    """Missing depth gives no 3D point plus a reason, never (0, 0, 0)."""
     depth = np.zeros((480, 640), dtype=float)
     result = apple_front_point_3d(320, 240, 20, depth, INTR)
     assert result.point_m is None
@@ -86,6 +91,7 @@ def make_disc_depth_image(
 
 
 def test_synthetic_front_point_no_noise_within_1mm() -> None:
+    """On a noise-free synthetic depth image the front-centre point is within 1 mm."""
     u, v, r_px, z = 340.0, 230.0, 35.0, 0.60  # off-centre apple, front at 0.6m
     depth = make_disc_depth_image(u, v, r_px, z)
     result = apple_front_point_3d(u, v, r_px, depth, INTR)
@@ -97,6 +103,7 @@ def test_synthetic_front_point_no_noise_within_1mm() -> None:
 
 
 def test_synthetic_front_point_with_noise_within_2mm() -> None:
+    """With 2 mm depth noise the front-centre point is still within 2 mm."""
     u, v, r_px, z = 340.0, 230.0, 35.0, 0.60
     depth = make_disc_depth_image(u, v, r_px, z, noise_std_m=0.002, seed=1)  # 2mm depth noise, typical of a real sensor
     result = apple_front_point_3d(u, v, r_px, depth, INTR)
@@ -111,6 +118,7 @@ def test_synthetic_front_point_with_noise_within_2mm() -> None:
 # --- docs/stage-4-worked-example.md: code must reproduce the hand calc -----
 
 def test_worked_example_matches_hand_calculation() -> None:
+    """The code reproduces docs/stage-4-worked-example.md's hand calculation exactly."""
     paths = load_paths()
     cam = load_camera()
     intr = Intrinsics.from_dict(cam)

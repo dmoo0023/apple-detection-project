@@ -50,6 +50,9 @@ def assign_rows_to_splits(rows_with_counts: list[tuple[int, int]], seed: int) ->
 
 
 def main() -> int:
+    """Create configs/splits.json (whole rows kept together, fixed seed); refuses to overwrite
+    without --overwrite. Returns 0 on success, 1 if the file already exists.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--overwrite", action="store_true", help="overwrite an existing configs/splits.json")
     args = parser.parse_args()
@@ -89,6 +92,7 @@ def main() -> int:
     report_lines = ["# Stage 3 split report\n"]
 
     def log(line: str = "") -> None:
+        """Print a line and also keep it for the markdown report."""
         print(line)
         report_lines.append(line)
 
