@@ -32,6 +32,22 @@ Collected by `scripts/collect_report_assets.py` from the pipeline's outputs. All
 - `03_yolo_training/stage8_comparison.csv` — Stage 8 experiments: settings actually used and val metrics for every run.
 - `03_yolo_training/stage8_seed_summary.csv` — Seed repeats: mean and spread of F1, mAP and count error.
 
+## 03b_optimisation
+
+- `03b_optimisation/optimisation_summary.csv` — What was optimised, how, against which criterion and data, and the result.
+- `03b_optimisation/optimisation_classical_grid.png` — Classical colour thresholds: grid-search main effects (mean train F1 at each level).
+- `03b_optimisation/optimisation_classical_grid.pdf` — Same figure as vector PDF.
+- `03b_optimisation/optimisation_classical_grid_effects.csv` — Grid-search main effects as a table.
+- `03b_optimisation/stage6_grid_search.csv` — All 32 grid-search configs and their train precision/recall/F1.
+- `03b_optimisation/optimisation_stage8_experiments.png` — YOLO training settings: each one-change experiment vs the baseline, with the seed-to-seed range shaded.
+- `03b_optimisation/optimisation_stage8_experiments.pdf` — Same figure as vector PDF.
+- `03b_optimisation/stage8_comparison.csv` — Settings actually used and val metrics for every Stage 8 run.
+- `03b_optimisation/stage8_seed_summary.csv` — Seed repeats: mean and spread of F1, mAP and count error.
+- `03b_optimisation/optimisation_threshold_sweep.png` — NMS IoU and confidence threshold sweeps on val for the chosen model (dashed = value used).
+- `03b_optimisation/optimisation_threshold_sweep.pdf` — Same figure as vector PDF.
+- `03b_optimisation/optimisation_threshold_sweep.csv` — Threshold sweep numbers (precision, recall, F1, mAP, count error).
+- `03b_optimisation/learning_curve.png` — Learning curve: performance against number of labelled train images.
+
 ## 04_error_analysis
 
 - `04_error_analysis/R01U04_Summer_RGB-12-41-9_errors.png` — Chosen model's errors on a val image: labelled apples (thin green), missed apples (red), false positives (yellow).
