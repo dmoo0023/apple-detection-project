@@ -50,102 +50,166 @@ published D435i field-of-view spec, and the depth scale is the RealSense
 mm convention applied directly to 8-bit depth PNGs that turned out not to
 be the expected 16-bit format.
 
-## Running the pipeline
+## Running everything, top to bottom
 
-Each stage has its own script(s), run in order. All paths/config come
-from `configs/`; nothing needs editing between runs except adding new
-labels to the raw data folder.
+Run every command from the repo root in PowerShell. Set `$py` once per
+session:
 
 ```powershell
-# Stage 1: audit the raw dataset (paths, pairing, integrity, labels)
-.\.venv\Scripts\python.exe scripts\audit_data.py
-
-# Stage 2: convert labelme circles to YOLO detection/segmentation labels
-.\.venv\Scripts\python.exe scripts\convert_labels.py
-
-# Stage 3: freeze train/val/test splits (ALREADY DONE -- refuses to
-# overwrite configs/splits.json without --overwrite; do not pass that
-# flag unless you specifically mean to change the frozen split)
-.\.venv\Scripts\python.exe scripts\make_splits.py
-
-# Stage 6: classical colour-masking baseline (tunes on train, evaluates on val)
-.\.venv\Scripts\python.exe scripts\run_classical_baseline.py
-
-# Stage 8: build the YOLO dataset folder, then train and evaluate
-.\.venv\Scripts\python.exe scripts\prepare_yolo_dataset.py
-.\.venv\Scripts\python.exe scripts\train_yolo.py --run-id <name> [--epochs N] [--batch N]
-# re-evaluate an existing run's saved weights on the current val set, no retraining
-.\.venv\Scripts\python.exe scripts\train_yolo.py --run-id <name> --eval-only
-
-# Stage 8: plot the learning curve from every logged run
-.\.venv\Scripts\python.exe scripts\plot_learning_curve.py
-
-# Save visual overlays (red = label, green = detection) for a given run
-.\.venv\Scripts\python.exe scripts\make_yolo_overlays.py --run-id <name> [-n N]
-
-# Stage 9: decision table comparing classical vs YOLO on val (checkpoint C3)
-.\.venv\Scripts\python.exe scripts\stage9_decision_table.py
-
-# Stage 9: the ONE-TIME locked test evaluation -- ALREADY DONE, tagged
-# final-test-eval. Refuses to run on a dirty git tree. Do not re-run this
-# unless you are genuinely starting a new, separate final evaluation (e.g.
-# a materially different chosen method) -- it is not meant to be repeated
-# or tuned against.
-.\.venv\Scripts\python.exe scripts\run_final_test_eval.py
-
-# Stage 10: full inference over one tree or all 544 (-> results/apples_3d.csv)
-.\.venv\Scripts\python.exe scripts\run_pipeline.py --tree-id R01U01
-.\.venv\Scripts\python.exe scripts\run_pipeline.py --all
-
-# Stage 10: summary stats + histograms from results/apples_3d.csv
-.\.venv\Scripts\python.exe scripts\stage10_summary.py
-
-# Stage 10: 3D graph of the apples' front-centre points (plus photo
-# overlay, and the two side by side) for example trees -> results/figures/
-.\.venv\Scripts\python.exe scripts\plot_apples_3d.py [--tree-id R01U01 ...]
-
-# Stage 8: comparison table of every experiment run (settings actually
-# used + val metrics) -> results/stage8_comparison.csv
-.\.venv\Scripts\python.exe scripts\stage8_comparison.py
+$py = ".\.venv\Scripts\python.exe"
 ```
 
-Generated outputs (`results/`, `runs/yolo/`, `data/derived/`) are not
-tracked in git; the scripts above recreate them.
+All paths and settings come from `configs/`. Generated outputs
+(`results/`, `runs/yolo/`, `data/derived/`) are not tracked in git; the
+scripts below recreate them.
+
+### 1. Data audit (Stage 1)
+
+```powershell
+& $py scripts\audit_data.py
+```
+
+Checks every RGB/depth pair, file name and label file, and writes
+`data/derived/manifest.csv` and `path_report.md`. Should end with
+"Exit check: PASS".
+
+### 2. Convert labels (Stage 2)
+
+```powershell
+& $py scripts\convert_labels.py
+```
+
+Converts the labelme circles to YOLO labels and
+`data/derived/apples_2d.csv`.
+
+### 3. Train/val/test split (Stage 3, already frozen)
+
+```powershell
+& $py scripts\make_splits.py
+```
+
+Reports the existing split in `configs/splits.json` and refuses to
+overwrite it. Never pass `--overwrite`: the split is fixed.
+
+### 4. Classical baseline (Stage 6)
+
+```powershell
+& $py scripts\run_classical_baseline.py
+```
+
+Grid-searches the colour thresholds on train and scores the best set on
+val (a few minutes).
+
+### 5. YOLO (Stage 8)
+
+Build the dataset folder, then train the chosen model (about 10 minutes):
+
+```powershell
+& $py scripts\prepare_yolo_dataset.py
+& $py scripts\train_yolo.py --run-id model-v1-40train --batch 8
+```
+
+The experiment series, one change each against that baseline:
+
+```powershell
+& $py scripts\train_yolo.py --run-id exp-01-yolov8s       --batch 8 --model yolov8s.pt
+& $py scripts\train_yolo.py --run-id exp-02-random-init   --batch 8 --model yolov8n.yaml
+& $py scripts\train_yolo.py --run-id exp-03-lr-cosine     --batch 8 --cos-lr
+& $py scripts\train_yolo.py --run-id exp-04-batch16-ep150 --batch 16 --epochs 150
+& $py scripts\train_yolo.py --run-id exp-05-no-mosaic     --batch 8 --mosaic 0
+& $py scripts\train_yolo.py --run-id seed-baseline-7      --batch 8 --seed 7
+& $py scripts\train_yolo.py --run-id seed-baseline-123    --batch 8 --seed 123
+& $py scripts\train_yolo.py --run-id seed-nomosaic-7      --batch 8 --mosaic 0 --seed 7
+& $py scripts\train_yolo.py --run-id seed-nomosaic-123    --batch 8 --mosaic 0 --seed 123
+```
+
+The segmentation experiment (exp-06) uses `scripts/train_yolo_seg.py` on
+the `exp/06-boxes-vs-segmentation` branch.
+
+Re-score a trained model on the current val set without retraining:
+
+```powershell
+& $py scripts\train_yolo.py --run-id model-v1-40train --eval-only
+```
+
+Analysis of the trained runs:
+
+```powershell
+& $py scripts\plot_learning_curve.py                         # results/learning_curve.png
+& $py scripts\stage8_comparison.py                           # results/stage8_comparison.csv
+& $py scripts\make_yolo_overlays.py --run-id model-v1-40train   # label vs detection overlays
+& $py scripts\error_analysis.py                              # missed apples / false positives
+```
+
+### 6. Choose the method (Stage 9)
+
+```powershell
+& $py scripts\stage9_decision_table.py
+```
+
+Compares classical and YOLO on val with identical evaluation code.
+
+The one-time locked test evaluation (already done, tagged
+`final-test-eval`):
+
+```powershell
+& $py scripts\run_final_test_eval.py
+```
+
+It refuses to run with uncommitted changes. Only rerun it if the chosen
+method changes, and never tune anything after seeing its result.
+
+### 7. Full run and 3D output (Stage 10)
+
+```powershell
+& $py scripts\run_pipeline.py --all     # all 544 trees -> results/apples_3d.csv (~2 min)
+& $py scripts\stage10_summary.py        # apples per tree + depth histograms
+& $py scripts\plot_apples_3d.py         # 3D graphs of the front-centre points -> results/figures/
+```
+
+Use `run_pipeline.py --tree-id R01U01` for a single tree, and
+`plot_apples_3d.py --tree-id R01U01 R08U01` to choose which trees get
+graphs.
+
+### 8. Tests, test report and code docs
+
+```powershell
+& $py -m pytest tests -v --html=docs\test_report.html --self-contained-html
+.\.venv\Scripts\pdoc.exe src scripts '!scripts.collect_report_assets' '!scripts.optimisation_figures' -o docs\api --footer-text "3D apple localisation pipeline"
+```
+
+### Shortcut: regenerate outputs without retraining
+
+Run steps 1, 2, 4 and 7, plus `train_yolo.py --run-id <name> --eval-only`
+for each model you need. Everything else reads the saved weights in
+`runs/yolo/<run-id>/weights/`.
+
+### After adding more labels
+
+Label new images in labelme (save the `.json` next to its `.png` in the
+raw RGB folder), then rerun steps 1 and 2. If the train or val labels
+changed, rerun `prepare_yolo_dataset.py` and `train_yolo.py` for a new
+point on the learning curve; `run_classical_baseline.py` re-tunes the
+classical baseline on the current labels.
+
+Every training run is logged automatically to `runs/experiments.csv` with
+its git commit hash, so commit code changes before training or running the
+final test evaluation.
 
 ## Tests and test report
 
-Run `.\.venv\Scripts\python.exe -m pytest tests\ -v` to run the full test
-suite (49 tests as of this writing — unit tests for every geometry
-function, a synthetic depth-image accuracy check, the evaluation module's
-own exit check, and more).
-
-The latest test report is in
-[`docs/test_report.html`](docs/test_report.html) (open it in a browser).
-Regenerate it with:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest tests -v --html=docs\test_report.html --self-contained-html
-```
+The test suite has 49 tests: unit tests for every geometry function, a
+synthetic depth-image accuracy check, the evaluation module's own exit
+check, and more. Run it with `& $py -m pytest tests -v`. The latest
+report is in [`docs/test_report.html`](docs/test_report.html) (open it in
+a browser); step 8 regenerates it.
 
 ## Code documentation
 
 HTML documentation of every module, class and function in `src/` and
-`scripts/` (built from their docstrings with [pdoc](https://pdoc.dev)) is
-in [`docs/api/`](docs/api/index.html) — open `docs/api/index.html` in a
-browser. Regenerate it after changing any docstring with:
-
-```powershell
-.\.venv\Scripts\pdoc.exe src scripts -o docs\api --footer-text "3D apple localisation pipeline"
-```
-
-### After adding more labels
-
-Whenever more images get labelled in labelme (in the raw RGB folder,
-alongside their `.png`): re-run `audit_data.py` then `convert_labels.py`
-to pick them up, then (if train or val changed)
-`prepare_yolo_dataset.py` and re-run `train_yolo.py` for a new point on
-the learning curve. `run_classical_baseline.py` can be re-run any time to
-re-tune the classical baseline on the current labels.
+`scripts/`, built from their docstrings with [pdoc](https://pdoc.dev), is
+in [`docs/api/`](docs/api/index.html): open `docs/api/index.html` in a
+browser. Step 8 regenerates it.
 
 ## Results
 
