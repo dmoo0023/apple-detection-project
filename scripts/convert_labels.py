@@ -30,6 +30,7 @@ random.seed(0)
 
 
 def draw_overlay(rgb_path: Path, apples: list, out_path: Path) -> None:
+    """Draw labelled circles (red), YOLO boxes (green) and centres (blue) on an image and save it."""
     img = cv2.imread(str(rgb_path))
     for apple in apples:
         cx, cy, r = int(round(apple.cx)), int(round(apple.cy)), int(round(apple.radius))
@@ -40,9 +41,13 @@ def draw_overlay(rgb_path: Path, apples: list, out_path: Path) -> None:
 
 
 def main() -> int:
+    """Run Stage 2: convert every labelme JSON to YOLO detection/segmentation labels and
+    apples_2d.csv, save sample overlays and a report. Returns 0 on success.
+    """
     report_lines: list[str] = ["# Stage 2 label conversion report\n"]
 
     def log(line: str = "") -> None:
+        """Print a line and also keep it for the markdown report."""
         print(line)
         report_lines.append(line)
 

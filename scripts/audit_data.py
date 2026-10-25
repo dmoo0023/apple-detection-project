@@ -45,6 +45,7 @@ def is_onedrive_placeholder(path: Path) -> bool:
 
 
 def collect_files(directory: Path) -> list[Path]:
+    """Return every file (not folder) directly inside `directory`, sorted by name."""
     return sorted(p for p in directory.iterdir() if p.is_file())
 
 
@@ -54,9 +55,13 @@ def name_shape(stem: str) -> str:
 
 
 def main() -> int:
+    """Run the Stage 1 audit: check paths, names, pairing and file integrity, write the
+    manifest, path report and checksums. Returns 0 if the exit check passes, else 1.
+    """
     report_lines: list[str] = []
 
     def log(line: str = "") -> None:
+        """Print a line and also keep it for the markdown report."""
         print(line)
         report_lines.append(line)
 
@@ -120,6 +125,7 @@ def main() -> int:
 
     # --- parse into structured records --------------------------------------
     def parse(files: list[Path]) -> dict[tuple[int, int], dict]:
+        """Group files by (row, unit) tree ID, keeping the parsed name parts of each file."""
         out: dict[tuple[int, int], dict] = {}
         for p in files:
             m = NAME_PATTERN.match(p.stem)
@@ -427,6 +433,7 @@ def main() -> int:
 
 
 def plt_colormap(norm_array: np.ndarray) -> np.ndarray:
+    """Map values in [0, 1] to RGB colours with matplotlib's 'turbo' colormap (for depth overlays)."""
     import matplotlib
     return matplotlib.colormaps["turbo"](norm_array)[..., :3]
 

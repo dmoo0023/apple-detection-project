@@ -41,6 +41,7 @@ def parse_count_mae(run_id: str) -> float | None:
 
 
 def main() -> int:
+    """Build results/learning_curve.csv and .png from the stage-8 runs in runs/experiments.csv. Returns 0, or 1 if there are no runs."""
     csv_path = REPO_ROOT / "runs" / "experiments.csv"
     df = pd.read_csv(csv_path)
     stage8 = df[df["stage"] == "stage-8"].copy()

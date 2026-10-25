@@ -15,6 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 @pytest.fixture(scope="module")
 def splits() -> dict:
+    """The frozen configs/splits.json (skips the test if it hasn't been generated)."""
     path = REPO_ROOT / "configs" / "splits.json"
     if not path.exists():
         pytest.skip("configs/splits.json not generated yet - run scripts/make_splits.py first")
@@ -23,10 +24,12 @@ def splits() -> dict:
 
 @pytest.fixture(scope="module")
 def manifest() -> pd.DataFrame:
+    """The Stage 1 manifest."""
     return pd.read_csv(load_paths()["manifest_csv"])
 
 
 def test_every_tree_assigned_exactly_once(splits: dict, manifest: pd.DataFrame) -> None:
+    """Every tree is in exactly one split, and the splits cover the manifest exactly."""
     all_ids = splits["splits"]["train"] + splits["splits"]["val"] + splits["splits"]["test"]
     assert len(all_ids) == len(manifest), f"expected {len(manifest)} trees, got {len(all_ids)}"
     assert len(set(all_ids)) == len(all_ids), "a tree_id appears in more than one split"
@@ -34,6 +37,7 @@ def test_every_tree_assigned_exactly_once(splits: dict, manifest: pd.DataFrame) 
 
 
 def test_splits_are_roughly_70_15_15(splits: dict) -> None:
+    """Split sizes are roughly 70/15/15."""
     total = sum(len(splits["splits"][s]) for s in ("train", "val", "test"))
     train_frac = len(splits["splits"]["train"]) / total
     val_frac = len(splits["splits"]["val"]) / total
@@ -44,6 +48,7 @@ def test_splits_are_roughly_70_15_15(splits: dict) -> None:
 
 
 def test_whole_rows_stay_together(splits: dict, manifest: pd.DataFrame) -> None:
+    """All trees in one orchard row are in the same split."""
     id_to_split = {}
     for split in ("train", "val", "test"):
         for tid in splits["splits"][split]:
@@ -57,4 +62,5 @@ def test_whole_rows_stay_together(splits: dict, manifest: pd.DataFrame) -> None:
 
 
 def test_seed_is_recorded(splits: dict) -> None:
+    """The split file records the integer seed used to make it."""
     assert "seed" in splits and isinstance(splits["seed"], int)

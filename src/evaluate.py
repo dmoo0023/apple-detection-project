@@ -25,6 +25,14 @@ DISTANCE_BANDS = [(0.4, 0.7), (0.7, 1.0), (1.0, 1.2)]
 
 @dataclass
 class Apple2D:
+    """One apple in 2D: a labelled circle or a method's prediction.
+
+    Attributes:
+      image_id: RGB image file stem, e.g. 'R01U01_Summer_RGB-12-40-11'.
+      cx, cy: circle centre, in pixels.
+      radius_px: circle radius, in pixels.
+      score: detection confidence (1.0 for labels and scoreless methods).
+    """
     image_id: str
     cx: float
     cy: float
@@ -46,6 +54,14 @@ def distance_band(z_m: float | None) -> str:
 
 @dataclass
 class ImageMatchResult:
+    """Matching result for one image.
+
+    Attributes:
+      image_id: the image these matches belong to.
+      matched: (gt_index, pred_index, centre distance in pixels) per matched pair.
+      unmatched_gt: indices of labelled apples with no match (false negatives).
+      unmatched_pred: indices of predictions with no match (false positives).
+    """
     image_id: str
     matched: list[tuple[int, int, float]] = field(default_factory=list)  # (gt_idx, pred_idx, distance_px)
     unmatched_gt: list[int] = field(default_factory=list)
@@ -315,6 +331,7 @@ def summarise(
     counting_scalars = {k: v for k, v in counting.items() if k != "per_image"}
 
     def _block(df: pd.DataFrame) -> dict:
+        """Median errors and within-2cm/3cm shares for one group of matched apples."""
         if df.empty:
             return {"n": 0}
         valid_3d = df["error_3d_proxy_cm"].dropna()

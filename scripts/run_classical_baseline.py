@@ -35,6 +35,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_split_image_ids(split: str) -> list[str]:
+    """Return the image IDs (RGB file stems) of the labelled images in one split."""
     splits = json.loads((REPO_ROOT / "configs" / "splits.json").read_text(encoding="utf-8"))
     tree_ids = set(splits["splits"][split])
     manifest = pd.read_csv(load_paths()["manifest_csv"])
@@ -44,17 +45,20 @@ def load_split_image_ids(split: str) -> list[str]:
 
 
 def load_gt(image_ids: list[str]) -> list[Apple2D]:
+    """Load the labelled circles for the given images from apples_2d.csv."""
     apples_df = pd.read_csv(load_paths()["derived_dir"] / "apples_2d.csv")
     apples_df = apples_df[apples_df["image_id"].isin(image_ids)]
     return [Apple2D(row.image_id, row.cx, row.cy, row.radius_px) for row in apples_df.itertuples()]
 
 
 def load_rgb(image_id: str) -> np.ndarray:
+    """Load one RGB image as an (H, W, 3) uint8 array."""
     rgb_dir = load_paths()["rgb_dir"]
     return np.array(Image.open(rgb_dir / f"{image_id}.png").convert("RGB"))
 
 
 def load_depth_m(image_id: str, scale: float) -> np.ndarray:
+    """Load the depth image paired with `image_id`, converted to metres with `scale`."""
     paths = load_paths()
     depth_name = image_id.replace("_RGB-", "_D-")
     raw = np.array(Image.open(paths["depth_dir"] / f"{depth_name}.png").convert("L")).astype(float)
@@ -62,6 +66,7 @@ def load_depth_m(image_id: str, scale: float) -> np.ndarray:
 
 
 def detections_to_apple2d(image_id: str, detections) -> list[Apple2D]:
+    """Convert classical detections to Apple2D, using blob area as the score."""
     return [Apple2D(image_id, d.cx, d.cy, d.radius_px, score=float(d.area_px)) for d in detections]
 
 
@@ -99,6 +104,7 @@ def grid_search(train_ids: list[str], gt_train: list[Apple2D]) -> tuple[Classica
 
 
 def main() -> int:
+    """Run Stage 6: grid-search thresholds on train, evaluate the best on val, save results and overlays. Returns 0 if the exit check passes."""
     results_dir = REPO_ROOT / "results"
     overlays_dir = REPO_ROOT / "data" / "derived" / "stage6_overlays"
     results_dir.mkdir(exist_ok=True)

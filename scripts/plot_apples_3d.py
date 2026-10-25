@@ -58,6 +58,13 @@ def _equal_limits(xs: np.ndarray, ys: np.ndarray, zs: np.ndarray) -> tuple[np.nd
 
 
 def draw_3d(ax, tree_apples: pd.DataFrame, tree_id: str) -> None:
+    """Draw one tree's 3D front-centre points on a 3D axes.
+
+    Inputs:
+      ax: a matplotlib 3D axes.
+      tree_apples: this tree's rows of results/apples_3d.csv (X, Y, Z in metres).
+      tree_id: e.g. 'R01U01', used in the title.
+    """
     valid = tree_apples[tree_apples["is_valid"]]
     n_invalid = int((~tree_apples["is_valid"]).sum())
     xs, ys, zs = valid["X"].to_numpy(float), valid["Y"].to_numpy(float), valid["Z"].to_numpy(float)
@@ -102,6 +109,7 @@ def draw_3d(ax, tree_apples: pd.DataFrame, tree_id: str) -> None:
 
 
 def draw_overlay(ax, rgb: np.ndarray, tree_apples: pd.DataFrame, tree_id: str) -> None:
+    """Draw the tree's RGB photo with each apple's 2D centre (pixels) and apple_index."""
     ax.imshow(rgb)
     valid = tree_apples[tree_apples["is_valid"]]
     invalid = tree_apples[~tree_apples["is_valid"]]
@@ -120,12 +128,14 @@ def draw_overlay(ax, rgb: np.ndarray, tree_apples: pd.DataFrame, tree_id: str) -
 
 
 def save(fig, out_dir: Path, stem: str) -> None:
+    """Save a figure as `<stem>.png` (300 dpi) and `<stem>.pdf` in out_dir, then close it."""
     fig.savefig(out_dir / f"{stem}.png", dpi=300, bbox_inches="tight", facecolor=SURFACE)
     fig.savefig(out_dir / f"{stem}.pdf", bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
 
 def main() -> int:
+    """Make the 3D graph, overlay and side-by-side figures for each requested tree. Returns 0, or 1 for an unknown tree ID."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--tree-id", nargs="+", default=EXAMPLE_TREES)
     args = parser.parse_args()

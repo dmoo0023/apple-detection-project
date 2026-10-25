@@ -19,6 +19,12 @@ import numpy as np
 
 @dataclass
 class ClassicalConfig:
+    """Thresholds and sizes for the classical colour-masking detector.
+
+    The defaults are starting values; the tuned values come from Stage 6's grid
+    search on the train split (results/baseline_colour_v1_config.json). Hue is
+    in OpenCV's 0-179 scale, saturation/value/Lab in 0-255, sizes in pixels.
+    """
     # --- Primary variant: well-lit red apple skin (grid-searched, Stage 6) ---
     # HSV red thresholds. Hue wraps at 0/180 in OpenCV's 0-179 scale, so red
     # needs TWO ranges: one just above 0, one just below 180.
@@ -59,6 +65,7 @@ class ClassicalConfig:
     watershed_dist_frac: float = 0.5
 
     def to_dict(self) -> dict:
+        """Return the config as a plain dict (for logging and JSON export)."""
         return self.__dict__.copy()
 
 
@@ -184,6 +191,13 @@ def fit_circle_to_contour(points: np.ndarray) -> tuple[float, float, float] | No
 
 @dataclass
 class ClassicalDetection:
+    """One apple found by the classical detector.
+
+    Attributes:
+      cx, cy: circle centre, in pixels.
+      radius_px: fitted circle radius, in pixels.
+      area_px: blob area in pixels, used as a simple confidence score.
+    """
     cx: float
     cy: float
     radius_px: float

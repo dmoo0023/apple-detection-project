@@ -14,6 +14,7 @@ from src.labels import validate_labelme_file  # noqa: E402
 
 @pytest.fixture(scope="module")
 def manifest() -> pd.DataFrame:
+    """The Stage 1 manifest (skips the test if it hasn't been generated)."""
     paths = load_paths()
     manifest_path = paths["manifest_csv"]
     if not manifest_path.exists():
@@ -23,24 +24,29 @@ def manifest() -> pd.DataFrame:
 
 @pytest.fixture(scope="module")
 def rgb_dir() -> Path:
+    """The raw RGB folder from configs/paths.yaml."""
     return load_paths()["rgb_dir"]
 
 
 def test_manifest_not_empty(manifest: pd.DataFrame) -> None:
+    """The manifest lists all 544 trees."""
     assert len(manifest) == 544, f"expected 544 trees, got {len(manifest)}"
 
 
 def test_every_rgb_path_exists(manifest: pd.DataFrame) -> None:
+    """Every RGB path in the manifest exists on disk."""
     missing = [p for p in manifest["rgb_path"] if p and not Path(p).is_file()]
     assert not missing, f"manifest rows point to missing RGB files: {missing[:5]}"
 
 
 def test_every_depth_path_exists(manifest: pd.DataFrame) -> None:
+    """Every depth path in the manifest exists on disk."""
     missing = [p for p in manifest["depth_path"] if p and not Path(p).is_file()]
     assert not missing, f"manifest rows point to missing depth files: {missing[:5]}"
 
 
 def test_labelled_images_have_valid_json(manifest: pd.DataFrame, rgb_dir: Path) -> None:
+    """Every labelled image has a valid labelme JSON that matches it."""
     labelled = manifest[manifest["has_labelme_json"] == True]  # noqa: E712
     assert len(labelled) > 0, "expected at least one labelled image"
     failures = {}
@@ -53,5 +59,6 @@ def test_labelled_images_have_valid_json(manifest: pd.DataFrame, rgb_dir: Path) 
 
 
 def test_no_duplicate_tree_ids(manifest: pd.DataFrame) -> None:
+    """No tree ID appears twice in the manifest."""
     dupes = manifest["tree_id"][manifest["tree_id"].duplicated()]
     assert dupes.empty, f"duplicate tree IDs in manifest: {dupes.tolist()}"

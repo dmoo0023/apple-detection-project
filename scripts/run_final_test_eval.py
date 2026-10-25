@@ -37,6 +37,7 @@ CHOSEN_RUN_ID = "model-v1-40train"  # the config tagged model-v1, confirmed at c
 
 
 def load_test_ids() -> list[str]:
+    """Return the image IDs of the labelled images in the locked test split."""
     paths = load_paths()
     manifest = pd.read_csv(paths["manifest_csv"])
     splits = json.loads((REPO_ROOT / "configs" / "splits.json").read_text(encoding="utf-8"))
@@ -46,12 +47,14 @@ def load_test_ids() -> list[str]:
 
 
 def load_gt(image_ids: list[str]) -> list[Apple2D]:
+    """Load the labelled circles for the given images from apples_2d.csv."""
     apples_df = pd.read_csv(load_paths()["derived_dir"] / "apples_2d.csv")
     apples_df = apples_df[apples_df["image_id"].isin(image_ids)]
     return [Apple2D(r.image_id, r.cx, r.cy, r.radius_px) for r in apples_df.itertuples()]
 
 
 def load_depth_m(image_id: str, scale: float) -> np.ndarray:
+    """Load the depth image paired with `image_id`, converted to metres with `scale`."""
     paths = load_paths()
     depth_name = image_id.replace("_RGB-", "_D-")
     raw = np.array(Image.open(paths["depth_dir"] / f"{depth_name}.png").convert("L")).astype(float)
@@ -59,6 +62,7 @@ def load_depth_m(image_id: str, scale: float) -> np.ndarray:
 
 
 def main() -> int:
+    """Evaluate the chosen YOLO model once on the test split (clean git tree only), save and log the results. Returns 0."""
     refuse_if_dirty("Stage 9 final test evaluation")
 
     test_ids = load_test_ids()
