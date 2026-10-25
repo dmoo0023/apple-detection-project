@@ -17,6 +17,10 @@ trees**: 19,294 apples detected. See [Results](#results) and
 
 Requires Windows, Python 3.11+, and an NVIDIA GPU (CUDA 12.8+ driver).
 
+The raw dataset and trained model weights (`*.pt`) are not included in this
+repository. Point `configs/paths.yaml` at the dataset, then train the
+models (step 5 below) before running Stages 9-10 or `--eval-only`.
+
 ```powershell
 # from the repo root
 python -m venv .venv

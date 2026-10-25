@@ -41,7 +41,6 @@ def load_split_image_ids(split: str) -> list[str]:
     tree_ids = set(splits["splits"][split])
     manifest = pd.read_csv(load_paths()["manifest_csv"])
     labelled = manifest[manifest["tree_id"].isin(tree_ids) & manifest["has_labelme_json"]]
-    rgb_dir = load_paths()["rgb_dir"]
     return [Path(p).stem for p in labelled["rgb_path"]]
 
 
