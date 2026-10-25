@@ -130,6 +130,17 @@ Regenerate it with:
 .\.venv\Scripts\python.exe -m pytest tests -v --html=docs\test_report.html --self-contained-html
 ```
 
+## Report figures and tables
+
+[`report/`](report/README.md) collects the figures and tables most useful
+for the written report, grouped by section (data, classical baseline, YOLO
+training, error analysis, method comparison, final test, 3D output), with
+a README describing every file. Rebuild it after rerunning any stage with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\collect_report_assets.py
+```
+
 ## Code documentation
 
 HTML documentation of every module, class and function in `src/` and
