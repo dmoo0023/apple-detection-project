@@ -10,16 +10,16 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.config import load_paths  # noqa: E402
 from src.labels import validate_labelme_file  # noqa: E402
+from src.pairing import PAIR_OK, load_manifest  # noqa: E402
 
 
 @pytest.fixture(scope="module")
 def manifest() -> pd.DataFrame:
     """The Stage 1 manifest (skips the test if it hasn't been generated)."""
-    paths = load_paths()
-    manifest_path = paths["manifest_csv"]
+    manifest_path = load_paths()["manifest_csv"]
     if not manifest_path.exists():
         pytest.skip("manifest.csv not generated yet - run scripts/audit_data.py first")
-    return pd.read_csv(manifest_path)
+    return load_manifest(manifest_path)  # blank paths stay "" instead of NaN
 
 
 @pytest.fixture(scope="module")
@@ -43,6 +43,12 @@ def test_every_depth_path_exists(manifest: pd.DataFrame) -> None:
     """Every depth path in the manifest exists on disk."""
     missing = [p for p in manifest["depth_path"] if p and not Path(p).is_file()]
     assert not missing, f"manifest rows point to missing depth files: {missing[:5]}"
+
+
+def test_every_tree_has_a_clean_pair(manifest: pd.DataFrame) -> None:
+    """Every tree has exactly one RGB and one depth file (no missing or ambiguous files)."""
+    bad = manifest[manifest["pair_status"] != PAIR_OK]
+    assert bad.empty, f"trees without a clean RGB/depth pair: {dict(zip(bad['tree_id'], bad['pair_status']))}"
 
 
 def test_labelled_images_have_valid_json(manifest: pd.DataFrame, rgb_dir: Path) -> None:

@@ -23,13 +23,9 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.config import load_paths, load_camera, camera_is_complete  # noqa: E402
 from src.labels import validate_labelme_file, load_labelme  # noqa: E402
+from src.pairing import NAME_PATTERN, PAIR_OK, pair_files  # noqa: E402
 
 random.seed(0)
-
-NAME_PATTERN = re.compile(
-    r"^R(?P<row>\d+)U(?P<unit>\d+)_(?P<season>[A-Za-z]+)_(?P<kind>RGB|Depth|D)"
-    r"-(?P<hh>\d{1,2})-(?P<mm>\d{1,2})-(?P<ss>\d{1,2})$"
-)
 
 FILE_ATTRIBUTE_OFFLINE = 0x1000
 FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS = 0x400000
@@ -357,13 +353,13 @@ def main() -> int:
             "Ask the student. See checkpoint C1.**")
 
     # --- manifest -------------------------------------------------------------
+    # pairing (and how missing / misnamed / duplicated files are handled) lives in src/pairing.py,
+    # so the manifest and every later stage agree on which files belong to which tree
+    pair_records, _ = pair_files(rgb_files, depth_files)
     manifest_rows = []
-    for key in sorted(set(rgb_by_tree) | set(depth_by_tree)):
-        row, unit = key
-        r = rgb_by_tree.get(key)
-        d = depth_by_tree.get(key)
-        rgb_path = r["path"] if r else None
-        depth_path = d["path"] if d else None
+    for rec in pair_records:
+        row, unit = rec["row"], rec["unit"]
+        rgb_path, depth_path = rec["rgb_path"], rec["depth_path"]
         rgb_arr = rgb_info.get(rgb_path) if rgb_path else None
         depth_arr = depth_info.get(depth_path) if depth_path else None
 
@@ -385,6 +381,7 @@ def main() -> int:
             "unit": unit,
             "rgb_path": str(rgb_path) if rgb_path else "",
             "depth_path": str(depth_path) if depth_path else "",
+            "pair_status": rec["pair_status"],
             "rgb_size": f"{rgb_arr.shape[1]}x{rgb_arr.shape[0]}" if rgb_arr is not None else "",
             "depth_size": f"{depth_arr.shape[1]}x{depth_arr.shape[0]}" if depth_arr is not None else "",
             "depth_dtype": str(depth_arr.dtype) if depth_arr is not None else "",
@@ -399,6 +396,10 @@ def main() -> int:
     manifest_df = pd.DataFrame(manifest_rows)
     manifest_df.to_csv(paths["manifest_csv"], index=False)
     log(f"\n## Manifest\n- wrote {len(manifest_df)} rows to `{paths['manifest_csv'].relative_to(Path.cwd())}`")
+    bad_pairs = manifest_df[manifest_df["pair_status"] != PAIR_OK]
+    log(f"- trees without a clean RGB/depth pair: {len(bad_pairs)}")
+    for r in bad_pairs.itertuples():
+        log(f"  - {r.tree_id}: {r.pair_status}")
     log("- NOTE: depth_median_raw/min_raw/max_raw are RAW 0-255 pixel values, NOT metres "
         "(see finding in section 7/9 above).")
 
@@ -412,16 +413,20 @@ def main() -> int:
         f"`{paths['checksums_txt'].relative_to(Path.cwd())}`")
 
     # --- exit status ------------------------------------------------------
-    exit_ok = (
+    # file-name problems fail the check in their own right, not only through the orphan they leave
+    names_ok = not unmatched_regex and not rgb_dupes and not depth_dupes and not case_collisions and not double_ext
+    data_ok = (
         total_trees == 544
-        and not rgb_only and not depth_only
+        and bad_pairs.empty
+        and names_ok
         and not placeholders
         and not json_problems
-        and complete
     )
+    exit_ok = data_ok and complete
     log(f"\n## Exit check: {'PASS' if exit_ok else 'ISSUES FOUND'}")
-    log(f"- 544 trees, clean pairing, no placeholders, all labels valid: "
-        f"{'yes' if (total_trees == 544 and not rgb_only and not depth_only and not placeholders and not json_problems) else 'no'}")
+    log(f"- 544 trees, clean pairing, no placeholders, all labels valid: {'yes' if data_ok else 'no'}")
+    log(f"- all file names valid (pattern, no duplicate tree IDs, no case clashes, no double extensions): "
+        f"{'yes' if names_ok else 'no'}")
     log(f"- camera.yaml complete: {complete}")
     if complete:
         log("- NOTE: fx/fy/cx/cy and depth_scale_to_metres are documented APPROXIMATIONS "
@@ -429,7 +434,7 @@ def main() -> int:
             "see configs/camera.yaml and docs/stage-1-notes.md for the limitation this implies.")
 
     (paths["derived_dir"] / "path_report.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
-    return 0
+    return 0 if exit_ok else 1
 
 
 def plt_colormap(norm_array: np.ndarray) -> np.ndarray:

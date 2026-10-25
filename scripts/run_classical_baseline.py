@@ -27,6 +27,7 @@ from src.evaluate import (  # noqa: E402
     summary_to_markdown,
 )
 from src.geometry import Intrinsics  # noqa: E402
+from src.pairing import load_depth_m  # noqa: E402
 from src.tracking import RunRecord, record_run  # noqa: E402
 
 import cv2
@@ -55,14 +56,6 @@ def load_rgb(image_id: str) -> np.ndarray:
     """Load one RGB image as an (H, W, 3) uint8 array."""
     rgb_dir = load_paths()["rgb_dir"]
     return np.array(Image.open(rgb_dir / f"{image_id}.png").convert("RGB"))
-
-
-def load_depth_m(image_id: str, scale: float) -> np.ndarray:
-    """Load the depth image paired with `image_id`, converted to metres with `scale`."""
-    paths = load_paths()
-    depth_name = image_id.replace("_RGB-", "_D-")
-    raw = np.array(Image.open(paths["depth_dir"] / f"{depth_name}.png").convert("L")).astype(float)
-    return raw * scale
 
 
 def detections_to_apple2d(image_id: str, detections) -> list[Apple2D]:
