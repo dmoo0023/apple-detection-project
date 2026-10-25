@@ -1,6 +1,0 @@
-what_was_optimised,method,criterion,data,result
-Classical colour thresholds (HSV + Lab),"Full-factorial grid search, 32 configs (5 thresholds x 2 levels)",F1 on train,train (labelled images only),best train F1 0.515 (range 0.353-0.515); val F1 0.548 with the best config
-"YOLO training settings (model size, pretraining, LR schedule, batch/epochs, augmentation, boxes vs masks)","6 one-change experiments vs a baseline, plus 3-seed repeats of the 2 best configs",F1 and mAP@0.5 on val,"train for fitting, val (26 images) for scoring","random init and segmentation clearly worse; model size, LR schedule and batch/epochs within seed noise. Over 3 seeds, no mosaic F1 0.824+/-0.008 vs baseline 0.810+/-0.005, but mAP@0.5 0.802 vs 0.821; baseline kept for its higher mAP (a close call)"
-NMS IoU threshold,"Sweep 0.2-0.7 (prediction-time, no retraining)",Count MAE and F1 on val,val,0.3 used: count MAE 2.96 vs 4.92 at Ultralytics' default 0.7; F1 0.812 vs 0.782
-Confidence threshold,"Sweep 0.05-0.6 (prediction-time, no retraining)",F1 on val,val,0.25 (Ultralytics default) used: F1 0.812; best on val 0.2 (F1 0.816). Not retuned after the locked test evaluation
-Optimiser and learning rate,"Not tuned: Ultralytics optimizer='auto' chose AdamW, lr0=0.002 for every run",-,-,requested lr0 values were overridden; exp-03 therefore tests the cosine schedule only
