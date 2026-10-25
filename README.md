@@ -289,7 +289,7 @@ see them all.
 
 ## Licence
 
-Copyright (C) 2026 moodyyyyyy (dmoo0023, Monash University).
+Copyright (C) 2026 Daniel Moody (dmoo0023, Monash University).
 
 This project is licensed under the **GNU Affero General Public License
 v3.0** — see [`LICENSE`](LICENSE). AGPL-3.0 was chosen because the
