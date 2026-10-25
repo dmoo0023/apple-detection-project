@@ -482,3 +482,18 @@ learning curve are now all on the same 26-image val set. Docs and README
 updated. No retraining. 50/50 tests pass.
 
 **Student review notes:**
+
+## Stage 7 removed — 2026-10-25
+
+**Asked:** remove Stage 7, since no pre-labelling was used.
+
+**Produced:** deleted `scripts/pre_label.py`, the generated pre-labels in
+`data/derived/prelabels/`, `docs/stage-7-notes.md`, and the
+`write_labelme_json()` helper and its test; removed Stage 7 mentions from
+the README and stage notes. Checked first that none of the hand-drawn
+labels came from the pre-labels: across the 27 images that had both,
+0 labelled circles match a pre-label circle. The Stage 7 entry above is
+kept as a record of what was generated, not used. Stage numbering is
+unchanged (6 then 8). 49/49 tests pass.
+
+**Student review notes:**

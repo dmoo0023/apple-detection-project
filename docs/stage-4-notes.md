@@ -57,7 +57,7 @@ asserts the code reproduces those exact numbers.
 
 ## Result
 
-8/8 geometry tests pass (50/50 across the whole project). The synthetic
+8/8 geometry tests pass (49/49 across the whole project). The synthetic
 depth image test shows the formula is implemented correctly; the worked
 example shows what it actually produces on this project's real
 (depth-scale-limited) data.

@@ -87,12 +87,6 @@
             <li>
                     <a class="function" href="#parse_yolo_segmentation_line">parse_yolo_segmentation_line</a>
             </li>
-            <li>
-                    <a class="function" href="#apples_to_labelme_dict">apples_to_labelme_dict</a>
-            </li>
-            <li>
-                    <a class="function" href="#write_labelme_json">write_labelme_json</a>
-            </li>
     </ul>
 
 
@@ -324,47 +318,6 @@ segmentation (polygon) labels, plus a flat per-apple CSV.</p>
 </span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>    <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span>
 </span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>    <span class="n">radius</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">cx</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">cy</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
 </span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>    <span class="k">return</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">radius</span>
-</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>
-</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>
-</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a><span class="c1"># --- Stage 7: write detector output as labelme-compatible circles for review ---</span>
-</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>
-</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a><span class="k">def</span><span class="w"> </span><span class="nf">apples_to_labelme_dict</span><span class="p">(</span><span class="n">image_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">apples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>                            <span class="n">img_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">img_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Apple"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a><span class="w">    </span><span class="sd">"""Build a labelme-format dict (same structure load_labelme reads) from a list</span>
-</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a><span class="sd">    of (cx, cy, radius) detections, for a human to open in labelme and correct.</span>
-</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>
-</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a><span class="sd">    This is PRE-labelling output, not a ground-truth label: it goes in a</span>
-</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a><span class="sd">    separate review folder (never the raw data root, rule 1), and a human</span>
-</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a><span class="sd">    must open, correct and move it before it counts as a real label.</span>
-</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a><span class="sd">    """</span>
-</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>    <span class="n">shapes</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>    <span class="k">for</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">apples</span><span class="p">:</span>
-</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>        <span class="n">shapes</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>            <span class="s2">"label"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
-</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>            <span class="s2">"points"</span><span class="p">:</span> <span class="p">[[</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">],</span> <span class="p">[</span><span class="n">cx</span> <span class="o">+</span> <span class="n">r</span><span class="p">,</span> <span class="n">cy</span><span class="p">]],</span>
-</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>            <span class="s2">"group_id"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
-</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>            <span class="s2">"shape_type"</span><span class="p">:</span> <span class="s2">"circle"</span><span class="p">,</span>
-</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a>            <span class="s2">"flags"</span><span class="p">:</span> <span class="p">{},</span>
-</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>            <span class="s2">"mask"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a>        <span class="p">})</span>
-</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a>    <span class="k">return</span> <span class="p">{</span>
-</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a>        <span class="s2">"version"</span><span class="p">:</span> <span class="s2">"5.0.0"</span><span class="p">,</span>
-</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a>        <span class="s2">"flags"</span><span class="p">:</span> <span class="p">{},</span>
-</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>        <span class="s2">"shapes"</span><span class="p">:</span> <span class="n">shapes</span><span class="p">,</span>
-</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>        <span class="s2">"imagePath"</span><span class="p">:</span> <span class="n">image_filename</span><span class="p">,</span>
-</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>        <span class="s2">"imageData"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>        <span class="s2">"imageHeight"</span><span class="p">:</span> <span class="n">img_h</span><span class="p">,</span>
-</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>        <span class="s2">"imageWidth"</span><span class="p">:</span> <span class="n">img_w</span><span class="p">,</span>
-</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>    <span class="p">}</span>
-</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>
-</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>
-</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a><span class="k">def</span><span class="w"> </span><span class="nf">write_labelme_json</span><span class="p">(</span><span class="n">json_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">image_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">apples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>                        <span class="n">img_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">img_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a><span class="w">    </span><span class="sd">"""Write apples_to_labelme_dict()'s output straight to disk as the labelme JSON file."""</span>
-</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">apples_to_labelme_dict</span><span class="p">(</span><span class="n">image_filename</span><span class="p">,</span> <span class="n">apples</span><span class="p">,</span> <span class="n">img_w</span><span class="p">,</span> <span class="n">img_h</span><span class="p">)</span>
-</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -824,84 +777,6 @@ apple whose circle extends past the edge still gets a valid in-image box).</p>
 
 <p>Centre is the mean of the polygon points; radius is the mean distance
 from the centre to each point.</p>
-</div>
-
-
-                </section>
-                <section id="apples_to_labelme_dict">
-                            <input id="apples_to_labelme_dict-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-<div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">apples_to_labelme_dict</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">image_filename</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">apples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>,</span><span class="param">	<span class="n">img_w</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">img_h</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'Apple'</span></span><span class="return-annotation">) -> <span class="nb">dict</span>:</span></span>
-
-                <label class="view-source-button" for="apples_to_labelme_dict-view-source"><span>View Source</span></label>
-
-    </div>
-    <a class="headerlink" href="#apples_to_labelme_dict"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="apples_to_labelme_dict-208"><a href="#apples_to_labelme_dict-208"><span class="linenos">208</span></a><span class="k">def</span><span class="w"> </span><span class="nf">apples_to_labelme_dict</span><span class="p">(</span><span class="n">image_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">apples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-</span><span id="apples_to_labelme_dict-209"><a href="#apples_to_labelme_dict-209"><span class="linenos">209</span></a>                            <span class="n">img_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">img_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Apple"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span id="apples_to_labelme_dict-210"><a href="#apples_to_labelme_dict-210"><span class="linenos">210</span></a><span class="w">    </span><span class="sd">"""Build a labelme-format dict (same structure load_labelme reads) from a list</span>
-</span><span id="apples_to_labelme_dict-211"><a href="#apples_to_labelme_dict-211"><span class="linenos">211</span></a><span class="sd">    of (cx, cy, radius) detections, for a human to open in labelme and correct.</span>
-</span><span id="apples_to_labelme_dict-212"><a href="#apples_to_labelme_dict-212"><span class="linenos">212</span></a>
-</span><span id="apples_to_labelme_dict-213"><a href="#apples_to_labelme_dict-213"><span class="linenos">213</span></a><span class="sd">    This is PRE-labelling output, not a ground-truth label: it goes in a</span>
-</span><span id="apples_to_labelme_dict-214"><a href="#apples_to_labelme_dict-214"><span class="linenos">214</span></a><span class="sd">    separate review folder (never the raw data root, rule 1), and a human</span>
-</span><span id="apples_to_labelme_dict-215"><a href="#apples_to_labelme_dict-215"><span class="linenos">215</span></a><span class="sd">    must open, correct and move it before it counts as a real label.</span>
-</span><span id="apples_to_labelme_dict-216"><a href="#apples_to_labelme_dict-216"><span class="linenos">216</span></a><span class="sd">    """</span>
-</span><span id="apples_to_labelme_dict-217"><a href="#apples_to_labelme_dict-217"><span class="linenos">217</span></a>    <span class="n">shapes</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="apples_to_labelme_dict-218"><a href="#apples_to_labelme_dict-218"><span class="linenos">218</span></a>    <span class="k">for</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">apples</span><span class="p">:</span>
-</span><span id="apples_to_labelme_dict-219"><a href="#apples_to_labelme_dict-219"><span class="linenos">219</span></a>        <span class="n">shapes</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-</span><span id="apples_to_labelme_dict-220"><a href="#apples_to_labelme_dict-220"><span class="linenos">220</span></a>            <span class="s2">"label"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-221"><a href="#apples_to_labelme_dict-221"><span class="linenos">221</span></a>            <span class="s2">"points"</span><span class="p">:</span> <span class="p">[[</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">],</span> <span class="p">[</span><span class="n">cx</span> <span class="o">+</span> <span class="n">r</span><span class="p">,</span> <span class="n">cy</span><span class="p">]],</span>
-</span><span id="apples_to_labelme_dict-222"><a href="#apples_to_labelme_dict-222"><span class="linenos">222</span></a>            <span class="s2">"group_id"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-223"><a href="#apples_to_labelme_dict-223"><span class="linenos">223</span></a>            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-224"><a href="#apples_to_labelme_dict-224"><span class="linenos">224</span></a>            <span class="s2">"shape_type"</span><span class="p">:</span> <span class="s2">"circle"</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-225"><a href="#apples_to_labelme_dict-225"><span class="linenos">225</span></a>            <span class="s2">"flags"</span><span class="p">:</span> <span class="p">{},</span>
-</span><span id="apples_to_labelme_dict-226"><a href="#apples_to_labelme_dict-226"><span class="linenos">226</span></a>            <span class="s2">"mask"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-227"><a href="#apples_to_labelme_dict-227"><span class="linenos">227</span></a>        <span class="p">})</span>
-</span><span id="apples_to_labelme_dict-228"><a href="#apples_to_labelme_dict-228"><span class="linenos">228</span></a>    <span class="k">return</span> <span class="p">{</span>
-</span><span id="apples_to_labelme_dict-229"><a href="#apples_to_labelme_dict-229"><span class="linenos">229</span></a>        <span class="s2">"version"</span><span class="p">:</span> <span class="s2">"5.0.0"</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-230"><a href="#apples_to_labelme_dict-230"><span class="linenos">230</span></a>        <span class="s2">"flags"</span><span class="p">:</span> <span class="p">{},</span>
-</span><span id="apples_to_labelme_dict-231"><a href="#apples_to_labelme_dict-231"><span class="linenos">231</span></a>        <span class="s2">"shapes"</span><span class="p">:</span> <span class="n">shapes</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-232"><a href="#apples_to_labelme_dict-232"><span class="linenos">232</span></a>        <span class="s2">"imagePath"</span><span class="p">:</span> <span class="n">image_filename</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-233"><a href="#apples_to_labelme_dict-233"><span class="linenos">233</span></a>        <span class="s2">"imageData"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-234"><a href="#apples_to_labelme_dict-234"><span class="linenos">234</span></a>        <span class="s2">"imageHeight"</span><span class="p">:</span> <span class="n">img_h</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-235"><a href="#apples_to_labelme_dict-235"><span class="linenos">235</span></a>        <span class="s2">"imageWidth"</span><span class="p">:</span> <span class="n">img_w</span><span class="p">,</span>
-</span><span id="apples_to_labelme_dict-236"><a href="#apples_to_labelme_dict-236"><span class="linenos">236</span></a>    <span class="p">}</span>
-</span></pre></div>
-
-
-            <div class="docstring"><p>Build a labelme-format dict (same structure load_labelme reads) from a list
-of (cx, cy, radius) detections, for a human to open in labelme and correct.</p>
-
-<p>This is PRE-labelling output, not a ground-truth label: it goes in a
-separate review folder (never the raw data root, rule 1), and a human
-must open, correct and move it before it counts as a real label.</p>
-</div>
-
-
-                </section>
-                <section id="write_labelme_json">
-                            <input id="write_labelme_json-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-<div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">write_labelme_json</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">json_path</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">Path</span>,</span><span class="param">	<span class="n">image_filename</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">apples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>,</span><span class="param">	<span class="n">img_w</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">img_h</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
-
-                <label class="view-source-button" for="write_labelme_json-view-source"><span>View Source</span></label>
-
-    </div>
-    <a class="headerlink" href="#write_labelme_json"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="write_labelme_json-239"><a href="#write_labelme_json-239"><span class="linenos">239</span></a><span class="k">def</span><span class="w"> </span><span class="nf">write_labelme_json</span><span class="p">(</span><span class="n">json_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">image_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">apples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-</span><span id="write_labelme_json-240"><a href="#write_labelme_json-240"><span class="linenos">240</span></a>                        <span class="n">img_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">img_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="write_labelme_json-241"><a href="#write_labelme_json-241"><span class="linenos">241</span></a><span class="w">    </span><span class="sd">"""Write apples_to_labelme_dict()'s output straight to disk as the labelme JSON file."""</span>
-</span><span id="write_labelme_json-242"><a href="#write_labelme_json-242"><span class="linenos">242</span></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">apples_to_labelme_dict</span><span class="p">(</span><span class="n">image_filename</span><span class="p">,</span> <span class="n">apples</span><span class="p">,</span> <span class="n">img_w</span><span class="p">,</span> <span class="n">img_h</span><span class="p">)</span>
-</span><span id="write_labelme_json-243"><a href="#write_labelme_json-243"><span class="linenos">243</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-</span><span id="write_labelme_json-244"><a href="#write_labelme_json-244"><span class="linenos">244</span></a>        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-</span></pre></div>
-
-
-            <div class="docstring"><p>Write apples_to_labelme_dict()'s output straight to disk as the labelme JSON file.</p>
 </div>
 
 
