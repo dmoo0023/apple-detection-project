@@ -165,8 +165,7 @@ def fit_circle_to_contour(points: np.ndarray) -> tuple[float, float, float] | No
 
     For a circle of centre (cx, cy) and radius r, every point (x, y) on it
     satisfies x^2+y^2 = 2*cx*x + 2*cy*y + (r^2 - cx^2 - cy^2), which is
-    linear in [2cx, 2cy, d], so it solves with ordinary least squares --
-    the same technique as src/geometry.py's sphere fit, in 2D.
+    linear in [2cx, 2cy, d], so it solves with ordinary least squares.
 
     Returns (cx, cy, radius) in pixels, or None if there are too few points.
     """
