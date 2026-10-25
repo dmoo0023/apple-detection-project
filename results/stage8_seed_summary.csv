@@ -1,3 +1,0 @@
-config,runs,seeds,f1_mean,f1_std,map50_mean,map50_std,count_mae_mean,count_mae_std
-baseline (mosaic on),model-v1-40train seed-baseline-7 seed-baseline-123,42 7 123,0.81,0.0052,0.821,0.0172,2.782,0.451
-no mosaic,exp-05-no-mosaic seed-nomosaic-7 seed-nomosaic-123,42 7 123,0.8235,0.0076,0.8019,0.004,2.718,0.212

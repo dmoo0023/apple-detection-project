@@ -1,3 +1,0 @@
-type,count,mean_radius_px,mean_confidence
-false_negative,120,10.547,
-false_positive,175,10.351,0.437

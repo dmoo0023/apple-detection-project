@@ -3,21 +3,15 @@
 Detects apples in RGB-D images of orchard trees and gives the 3D
 position of each apple's front-centre point (the point on its
 camera-facing surface at its 2D centre), for an automated picking
-application. Built
-following `agent_workflow.md`, the project brief this repo implements.
+application.
 
-**Status: all stages complete.** (The brief's optional Stage 7,
-detector-assisted pre-labelling, was not used: every label was drawn by
-hand in labelme, so the stage numbering skips from 6 to 8.) YOLO (`model-v1`) was chosen at
-checkpoint C3 after the full Stage 8 experiment series, scored
-**F1=0.757, mAP@0.5=0.755** on the one-time locked test evaluation
-(`final-test-eval`, lower than its val numbers, reported honestly as the
-real generalisation gap, not retuned away), and was then run over **all
-544 trees**: 19,294 apples detected
-(`results/apples_3d.csv`). See [Current results](#current-results) below
-for where things stand, and [`docs/limitations.md`](docs/limitations.md)
-for what isn't resolved — reproducing results from this README alone does
-not make those limitations go away, only reproduces them honestly.
+**Status: all stages complete.** (Stage 7, detector-assisted
+pre-labelling, was not used: every label was drawn by hand in labelme, so
+the stage numbering skips from 6 to 8.) YOLO (`model-v1`) was chosen after
+the full Stage 8 experiment series, scored **F1=0.757, mAP@0.5=0.755** on
+the one-time locked test evaluation, and was then run over **all 544
+trees**: 19,294 apples detected. See [Results](#results) and
+[Known limitations](#known-limitations) below.
 
 ## Setup
 
@@ -50,8 +44,7 @@ path edit (rule 8: no paths in code, everything comes from
 
 Camera intrinsics and the depth scale are in `configs/camera.yaml`. Read
 the comments in that file before trusting any 3D number this project
-produces — both are **documented approximations**, not measurements (see
-checkpoint C1 in `docs/stage-1-notes.md`): the original camera and
+produces — both are **documented approximations**, not measurements: the original camera and
 capture setup were unavailable, so intrinsics are derived from Intel's
 published D435i field-of-view spec, and the depth scale is the RealSense
 mm convention applied directly to 8-bit depth PNGs that turned out not to
@@ -107,10 +100,17 @@ labels to the raw data folder.
 # Stage 10: summary stats + histograms from results/apples_3d.csv
 .\.venv\Scripts\python.exe scripts\stage10_summary.py
 
-# Stage 10: report figure -- 3D graph of the apples' front-centre points
-# (plus photo overlay, and the two side by side) for 5 example trees
+# Stage 10: 3D graph of the apples' front-centre points (plus photo
+# overlay, and the two side by side) for example trees -> results/figures/
 .\.venv\Scripts\python.exe scripts\plot_apples_3d.py [--tree-id R01U01 ...]
+
+# Stage 8: comparison table of every experiment run (settings actually
+# used + val metrics) -> results/stage8_comparison.csv
+.\.venv\Scripts\python.exe scripts\stage8_comparison.py
 ```
+
+Generated outputs (`results/`, `runs/yolo/`, `data/derived/`) are not
+tracked in git; the scripts above recreate them.
 
 ## Tests and test report
 
@@ -125,18 +125,6 @@ Regenerate it with:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests -v --html=docs\test_report.html --self-contained-html
-```
-
-## Report figures and tables
-
-[`report/`](report/README.md) collects the figures and tables most useful
-for the written report, grouped by section (data, classical baseline, YOLO
-training, error analysis, method comparison, final test, 3D output), with
-a README describing every file. Rebuild it after rerunning any stage with:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\optimisation_figures.py    # optimisation-section figures/tables
-.\.venv\Scripts\python.exe scripts\collect_report_assets.py
 ```
 
 ## Code documentation
@@ -159,13 +147,11 @@ to pick them up, then (if train or val changed)
 the learning curve. `run_classical_baseline.py` can be re-run any time to
 re-tune the classical baseline on the current labels.
 
-## Current results
+## Results
 
-**Stages 8 and 9 are both complete.** Stage 8's exit check (logged
-experiments, learning curve, best config with seed spread, error
-analysis) passed, choosing YOLO at checkpoint C3; Stage 9's one-time
-locked test evaluation (`final-test-eval`) then ran it on the held-out
-test split (rows never seen in training/validation at all):
+YOLO was chosen over the classical baseline on the validation split, then
+evaluated once on the locked test split (orchard rows never seen in
+training or validation):
 
 | | Classical (val) | YOLO val (`model-v1`) | **YOLO test (`final-test-eval`, locked)** |
 |---|---|---|---|
@@ -178,49 +164,37 @@ honest generalisation gap (some val rows were seen repeatedly during
 development; test rows never were), not retuned away, per the brief's
 "no tuning after the final test evaluation" rule.
 
-**Stage 10 (full inference, all 544 trees):** 19,294 apples detected,
-0-94 per tree (median 36), 0.7% with no usable depth sample (correctly
-flagged, not fabricated). **100% of valid depths fall below the
-dataset's own stated 0.4m minimum capture distance** — the checkpoint-C1
-depth-scale limitation, now visible across the whole dataset, not just
-the labelled subset it was first found in
-(`results/stage10_summary.md`, `results/stage10_histograms.png`). 3D
-graphs of the front-centre points (with matching photo overlays) for 5
-example trees in `results/figures/`, deliberately including one tree with
-zero detections (checked by eye: genuinely no visible apples), not only
-clean examples.
-
-Full tables in `results/`; the complete narrative (including a
-tried-and-reverted experiment, corrected mistakes, the error analysis,
-and the Stage 9 decision table) is in `EXPERIMENTS.md`,
-`docs/stage-6-notes.md`, `docs/stage-8-notes.md`, `docs/stage-9-notes.md`,
-and `docs/stage-10-notes.md`.
+**Full inference, all 544 trees:** 19,294 apples detected, 0-94 per tree
+(median 36), 0.7% with no usable depth sample (flagged as invalid, never
+given a made-up position). Every valid depth falls below the dataset's
+stated 0.4 m minimum capture distance — a direct consequence of the
+approximate depth scale (see below).
 
 ## Known limitations
 
-See [`docs/limitations.md`](docs/limitations.md) for the full list.
-Headline items: 3D depth scale and camera intrinsics are documented
-approximations, not measurements (checkpoint C1), so the brief's "2-3cm"
-target cannot be verified in absolute terms against any 3D number here;
-3D accuracy is a proxy (no physical ground truth); the dataset is red
-apples, single viewpoint, summer only.
+- Depth scale and camera intrinsics are documented approximations, not
+  measurements, so the "2-3 cm" accuracy target cannot be verified in
+  absolute terms against any 3D number here.
+- 3D accuracy is a proxy: there is no physical ground truth, so "3D error"
+  is the distance between front-centre points computed from the predicted
+  and the labelled circle through the same geometry code.
+- The 3D output is each visible apple's front-centre point; apples hidden
+  from the single camera viewpoint are not detected at all.
+- The dataset is red apples, one viewpoint per tree, summer only.
+- Ultralytics' default `optimizer='auto'` (AdamW, lr0=0.002) overrode the
+  requested learning rate in every training run.
 
 ## Repository structure
 
 ```text
 configs/        camera.yaml, paths.yaml, splits.json (frozen), yolo_data.yaml
-data/derived/   generated manifests, converted labels, overlays (raw data stays
-                at raw_data_root, never copied in)
-docs/           one plain-language note per stage, the worked 3D example,
-                limitations.md, ai_use_log.md, api/ (HTML code documentation),
-                test_report.html (pytest report)
-EXPERIMENTS.md  narrative log of every experiment, including failed ones
-results/        apples_3d.csv (the final deliverable: every detected apple's
-                front-centre point, all 544 trees), metric tables, the
-                learning curve, per-run markdown summaries, figures/ (3D
-                graphs for 5 example trees)
-runs/           training run logs/plots (model weights are git-ignored) and
-                experiments.csv (commit hash + config + metrics per run)
+data/derived/   manifest.csv, apples_2d.csv, checksums.txt (everything else
+                here is generated; raw data stays at raw_data_root)
+docs/           api/ (HTML code documentation), test_report.html (pytest report)
+results/        baseline_colour_v1_config.json (tuned classical detector);
+                all other outputs are generated here by the scripts
+runs/           experiments.csv (commit hash + config + metrics per run);
+                training outputs are generated here by train_yolo.py
 scripts/        one thin script per stage/task -- see "Running the pipeline" above
 src/            the shared modules every script/stage calls into:
                   geometry.py   - 2D centre + depth -> 3D front-centre point (the one geometry code path)
