@@ -131,8 +131,7 @@ def main() -> int:
     val_labelled = int(val_sub["has_labelme_json"].sum())
     log(f"\n- val split has {val_labelled} labelled images. Stage 5/6 need at least a handful of "
         f"labelled val images to compute meaningful metrics; if this is 0, prioritise labelling "
-        f"some val-split images too (Stage 7's pre-labelling loop targets train primarily, but "
-        f"val needs a true-labelled set as well, not pre-labels).")
+        f"some val-split images too.")
 
     (paths["derived_dir"] / "stage3_report.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
 

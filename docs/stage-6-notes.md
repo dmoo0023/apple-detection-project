@@ -163,7 +163,7 @@ weaken a check to make it pass) — a regression test
 - The grid search's 5-parameter space was deliberately narrow (morphology
   kernel, minimum blob area, and the watershed seed threshold were fixed,
   not searched) to keep runtime reasonable with so few train images. If
-  more labels arrive (Stage 7), widening the search is worth revisiting.
+  more labels arrive, widening the search is worth revisiting.
 - `area_px` is used as a makeshift detection "confidence" for mAP's
   ranking, since the classical pipeline has no real probability score —
   a bigger blob isn't necessarily a more confident apple (it could be two

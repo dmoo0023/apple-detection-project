@@ -62,7 +62,7 @@ fine — rule 3 says it must stay untouched until Stage 9 anyway). To reach
 the brief's target of 50–80 labelled test images, `scripts/make_splits.py`
 prints a specific list of 50 unlabelled test-split tree IDs to label next
 (from rows 4 and 21) — see `data/derived/stage3_report.md` for the full
-list. This feeds directly into Stage 7's pre-labelling loop.
+list.
 
 ## What could go wrong later
 

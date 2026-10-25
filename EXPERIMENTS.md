@@ -21,7 +21,7 @@ reasonable size given only 7 train images to tune against.
 precision 0.660, recall 0.404, F1 0.501, mAP@0.5 0.103 (TP=231, FP=119,
 FN=341). Train F1 was 0.545 — close to val's 0.501, so no dramatic
 overfitting to the 7 train images, though 7 is a very small tuning set and
-this should be revisited once more labels exist (Stage 7).
+this should be revisited once more labels exist.
 
 **The mAP@0.5 vs F1 gap (0.103 vs 0.501) is itself a finding, not a bug:**
 F1 comes from the lenient centre-distance match (within 0.5x the labelled
@@ -521,3 +521,11 @@ F1 0.753 / 0.781 / 0.778 / 0.812 and mAP 0.742 / 0.779 / 0.806 / 0.830 at
 F1 0.548, mAP 0.204. Stage 9 decision table numbers unchanged (it was
 already on the 26-image val set). See `docs/stage-8-notes.md` and
 `docs/stage-10-notes.md`.
+
+## Stage 7 removed (not used)
+
+**Date:** 2026-10-25
+**What:** The pre-labelling stage was removed from the repository. Its
+pre-labels were never used: every label was drawn by hand (verified: 0 of
+the hand-drawn circles on the 27 overlapping images match a pre-label
+circle). No results change.

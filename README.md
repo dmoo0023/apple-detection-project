@@ -6,7 +6,9 @@ camera-facing surface at its 2D centre), for an automated picking
 application. Built
 following `agent_workflow.md`, the project brief this repo implements.
 
-**Status: all 10 stages complete.** YOLO (`model-v1`) was chosen at
+**Status: all stages complete.** (The brief's optional Stage 7,
+detector-assisted pre-labelling, was not used: every label was drawn by
+hand in labelme, so the stage numbering skips from 6 to 8.) YOLO (`model-v1`) was chosen at
 checkpoint C3 after the full Stage 8 experiment series, scored
 **F1=0.757, mAP@0.5=0.755** on the one-time locked test evaluation
 (`final-test-eval`, lower than its val numbers, reported honestly as the
@@ -76,11 +78,6 @@ labels to the raw data folder.
 # Stage 6: classical colour-masking baseline (tunes on train, evaluates on val)
 .\.venv\Scripts\python.exe scripts\run_classical_baseline.py
 
-# Stage 7: pre-label unlabelled train images with the current best detector,
-# for a human to correct in labelme (writes to data/derived/prelabels/,
-# never the raw data folder)
-.\.venv\Scripts\python.exe scripts\pre_label.py [--batch-size N]
-
 # Stage 8: build the YOLO dataset folder, then train and evaluate
 .\.venv\Scripts\python.exe scripts\prepare_yolo_dataset.py
 .\.venv\Scripts\python.exe scripts\train_yolo.py --run-id <name> [--epochs N] [--batch N]
@@ -118,7 +115,7 @@ labels to the raw data folder.
 ## Tests and test report
 
 Run `.\.venv\Scripts\python.exe -m pytest tests\ -v` to run the full test
-suite (50 tests as of this writing — unit tests for every geometry
+suite (49 tests as of this writing — unit tests for every geometry
 function, a synthetic depth-image accuracy check, the evaluation module's
 own exit check, and more).
 

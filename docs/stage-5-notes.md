@@ -100,7 +100,7 @@ have kept breaking the test suite for a reason that isn't actually a bug.
 
 ## Result
 
-All project tests pass (50/50 as of the latest rerun). Evaluation module built, tested against its own
+All project tests pass (49/49 as of the latest rerun). Evaluation module built, tested against its own
 exit check (trivial predictor perfect, shifted copy predictable), ready for
 Stage 6 onward to call.
 

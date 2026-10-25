@@ -56,7 +56,7 @@ on each labelled apple. 16/16 tests pass, including the round-trip checks.
   detector's segmentation mask, but don't use it as a precise geometric
   circle fit (Stage 6's classical pipeline does its own circle fitting from
   pixels, independently).
-- Once Stage 7's pre-labelling loop adds more labelled images, some of them
+- Once more images are labelled, some of them
   (being machine-generated and student-corrected) may trigger the warnings
   this stage already checks for (tiny radius, out-of-bounds centre, empty
   image) — `scripts/convert_labels.py` will report them; they should be
