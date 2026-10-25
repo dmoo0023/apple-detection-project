@@ -141,6 +141,27 @@ changed at the same time, this isn't read as a new regression the way the
 here to draw a conclusion from. Worth watching at the next point, where
 the val set will (expected to) hold steady again.
 
+### Rerun on one fixed val set (2026-10-25)
+
+The table above mixes val sets (20 and 25 images). In the full rerun on
+2026-10-25, all four saved models were re-evaluated, without retraining
+(`train_yolo.py --eval-only`), on the **current 26-image val set**, so every
+point on the learning curve is now measured on the same images, as the
+brief asks:
+
+| Run | Train images | Val images | Precision | Recall | F1 | mAP@0.5 | Count MAE |
+|---|---|---|---|---|---|---|---|
+| `model-v1-first-fit` | 10 | 26 | 0.736 | 0.772 | 0.753 | 0.742 | 3.19 |
+| `model-v1-20train` | 20 | 26 | 0.773 | 0.790 | 0.781 | 0.779 | 2.73 |
+| `model-v1-31train` | 31 | 26 | 0.760 | 0.796 | 0.778 | 0.806 | 2.19 |
+| `model-v1-40train` | 40 | 26 | **0.785** | **0.842** | **0.812** | **0.830** | 2.96 |
+
+Same shape as before: F1/mAP rise overall with a small dip at 31 images,
+and 40 images is best on F1 and mAP. On a fixed val set, count MAE is
+lowest at 31 images, not 40. The classical baseline on the same 26 images
+scores F1 = 0.548, mAP = 0.204, count MAE = 4.92
+(`results/stage9_decision_table.md`).
+
 ## Classical vs. YOLO (current numbers, latest runs, both post-NMS-fix)
 
 Classical's numbers are from the same (40 train / 25 val) re-tune as YOLO

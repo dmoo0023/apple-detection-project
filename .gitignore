@@ -31,7 +31,6 @@ runs/**/weights/
 runs/**/*.pt
 runs/**/*.pth
 runs/**/*.jpg
-results/**/*.ply
 
 # Keep small tracked result tables / manifests / sample overlays despite the patterns above
 !data/derived/manifest.csv

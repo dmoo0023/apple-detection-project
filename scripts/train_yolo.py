@@ -10,6 +10,7 @@ Run with: .venv\\Scripts\\python.exe scripts\\train_yolo.py [--run-id ID] [--epo
 """
 
 import argparse
+import ast
 import json
 import sys
 from pathlib import Path
@@ -42,6 +43,23 @@ def load_gt(image_ids: list[str]) -> list[Apple2D]:
     return [Apple2D(row.image_id, row.cx, row.cy, row.radius_px) for row in apples_df.itertuples()]
 
 
+def logged_n_train_images(run_id: str) -> int | None:
+    """The train-image count this run was trained on, from its latest training entry in
+    runs/experiments.csv (an --eval-only re-evaluation doesn't change it)."""
+    csv_path = REPO_ROOT / "runs" / "experiments.csv"
+    if not csv_path.exists():
+        return None
+    df = pd.read_csv(csv_path)
+    n = None
+    for config_str in df.loc[df["run_id"] == run_id, "config"]:
+        try:
+            config = ast.literal_eval(config_str)
+        except (ValueError, SyntaxError):
+            continue
+        n = config.get("n_train_images", n)
+    return n
+
+
 def load_depth_m(image_id: str, scale: float) -> np.ndarray:
     paths = load_paths()
     depth_name = image_id.replace("_RGB-", "_D-")
@@ -64,12 +82,21 @@ def main() -> int:
     parser.add_argument("--lr0", type=float, default=0.01, help="initial learning rate (Ultralytics default 0.01)")
     parser.add_argument("--cos-lr", action="store_true", help="use cosine LR schedule instead of linear decay")
     parser.add_argument("--mosaic", type=float, default=1.0, help="mosaic augmentation probability (0 disables it)")
+    parser.add_argument("--eval-only", action="store_true",
+                         help="skip training; re-evaluate this run's existing runs/yolo/<run-id>/weights/best.pt on val")
     args = parser.parse_args()
 
     data_yaml = REPO_ROOT / "configs" / "yolo_data.yaml"
     if not data_yaml.exists():
         print(f"Missing {data_yaml} -- run scripts/prepare_yolo_dataset.py first.")
         return 1
+
+    if args.eval_only:
+        best_weights = REPO_ROOT / "runs" / "yolo" / args.run_id / "weights" / "best.pt"
+        if not best_weights.exists():
+            print(f"Missing {best_weights} -- nothing to re-evaluate for run {args.run_id!r}.")
+            return 1
+        return evaluate_on_val(args, best_weights)
 
     model = YOLO(args.model)
     results = model.train(
@@ -91,8 +118,12 @@ def main() -> int:
 
     best_weights = Path(results.save_dir) / "weights" / "best.pt"
     print(f"\nBest weights: {best_weights}")
+    return evaluate_on_val(args, best_weights)
 
-    # --- evaluate on val through the shared geometry/evaluation modules -----
+
+def evaluate_on_val(args: argparse.Namespace, best_weights: Path) -> int:
+    """Evaluate a trained run on val through the shared geometry/evaluation modules,
+    write its results/<run-id>_val_* files and log it in runs/experiments.csv."""
     val_yolo = YOLO(str(best_weights))
     val_dir = REPO_ROOT / "data" / "derived" / "yolo_dataset" / "images" / "val"
     val_ids = sorted(p.stem for p in val_dir.glob("*.png"))
@@ -125,13 +156,20 @@ def main() -> int:
     print("\n" + summary_md)
 
     det = summary["detection"]
+    if args.eval_only:
+        config = {"model": args.model, "nms_iou": args.iou, "note": "re-evaluated existing weights (--eval-only)"}
+        n_train = logged_n_train_images(args.run_id)
+        if n_train is not None:  # keeps this run on the learning curve, now on the current val set
+            config["n_train_images"] = n_train
+    else:
+        config = {"model": args.model, "epochs": args.epochs, "batch": args.batch, "imgsz": 640,
+                  "nms_iou": args.iou, "lr0": args.lr0, "cos_lr": args.cos_lr, "mosaic": args.mosaic,
+                  "n_train_images": len(list((REPO_ROOT / "data/derived/yolo_dataset/images/train").glob("*.png")))}
     record_run(RunRecord(
         run_id=args.run_id,
         stage="stage-8",
         seed=args.seed,
-        config={"model": args.model, "epochs": args.epochs, "batch": args.batch, "imgsz": 640,
-                "nms_iou": args.iou, "lr0": args.lr0, "cos_lr": args.cos_lr, "mosaic": args.mosaic,
-                "n_train_images": len(list((REPO_ROOT / "data/derived/yolo_dataset/images/train").glob("*.png")))},
+        config=config,
         metrics_summary=f"val P={det['precision']:.3f} R={det['recall']:.3f} F1={det['f1']:.3f} mAP={det['mAP@0.5']:.3f} "
                          f"countMAE={summary['counting']['count_mae']:.2f} countBias={summary['counting']['count_bias']:+.2f}",
     ))

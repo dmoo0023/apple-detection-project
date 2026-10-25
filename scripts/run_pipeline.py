@@ -1,13 +1,11 @@
 """Stage 10: full inference pipeline. For a given tree ID or every tree in
 the dataset, detects apples (YOLO, the model-v1 config chosen at checkpoint
-C3), samples depth, and reports each apple's 3D surface point (see
-src/geometry.py's scope note: a surface point per checkpoint C2's decision,
-not a corrected centre -- the column names below are X, Y, Z per the
-brief's spec, but they are near-surface positions, not centres).
+C3), samples depth, and back-projects each apple's 3D front-centre point
+(src/geometry.py's apple_front_point_3d).
 
 Writes results/apples_3d.csv: one row per detected apple --
-tree_id, apple_index, u, v, radius_px, X, Y, Z, depth_pixels_used,
-is_valid, confidence. A detection with no usable depth still gets a row
+tree_id, apple_index, u, v, X, Y, Z (front-centre point, metres),
+depth_pixels_used, is_valid, confidence. A detection with no usable depth still gets a row
 (X/Y/Z/depth_pixels_used empty), never silently dropped or zeroed (rule 4).
 
 Run with:
@@ -26,7 +24,7 @@ from ultralytics import YOLO
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.config import load_paths, load_camera  # noqa: E402
-from src.geometry import Intrinsics, surface_point_3d  # noqa: E402
+from src.geometry import Intrinsics, apple_front_point_3d  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHOSEN_RUN_ID = "model-v1-40train"  # the config tagged model-v1, confirmed at checkpoint C3
@@ -46,16 +44,15 @@ def process_tree(tree_id: str, rgb_path: Path, depth_path: Path, model: YOLO, in
     for i, box in enumerate(pred.boxes):
         x0, y0, x1, y1 = box.xyxy[0].tolist()
         u, v = (x0 + x1) / 2, (y0 + y1) / 2
-        radius_px = ((x1 - x0) + (y1 - y0)) / 4
+        radius_px = ((x1 - x0) + (y1 - y0)) / 4  # only sizes the depth-sampling disc
         confidence = float(box.conf[0])
 
-        result = surface_point_3d(u, v, radius_px, depth_m, intr)
+        result = apple_front_point_3d(u, v, radius_px, depth_m, intr)
         row = {
             "tree_id": tree_id,
             "apple_index": i,
             "u": u,
             "v": v,
-            "radius_px": radius_px,
             "X": result.point_m[0] if result.is_valid else None,
             "Y": result.point_m[1] if result.is_valid else None,
             "Z": result.point_m[2] if result.is_valid else None,

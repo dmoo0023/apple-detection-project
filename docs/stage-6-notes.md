@@ -32,8 +32,7 @@ that's a red flag worth investigating before trusting the fancier method.
    **watershed** grows each seed outward to the blob's true edges —
    splitting the merged blob back into separate apples.
 4. **Circle fit.** Each separated region's outline is irregular (leaf
-   gaps, lighting). A least-squares circle fit (the same linear algebraic
-   technique as Stage 4's sphere fit, in 2D) turns that irregular outline
+   gaps, lighting). A 2D least-squares circle fit turns that irregular outline
    into a clean (centre, radius).
 
 ## Tuning (grid search on train only)

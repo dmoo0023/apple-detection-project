@@ -28,12 +28,6 @@ def main() -> int:
     print("pandas:", pandas.__version__)
     print("pyyaml:", yaml.__version__)
 
-    try:
-        import open3d
-        print("open3d:", open3d.__version__)
-    except ImportError:
-        print("open3d: not installed (optional)")
-
     cuda_available = torch.cuda.is_available()
     print("CUDA available:", cuda_available)
     if not cuda_available:
